@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SapiensDataAPI.Data.DbContextCs;
 using SapiensDataAPI.Dtos.Expense.Request;
@@ -14,7 +15,7 @@ namespace SapiensDataAPI.Controllers
 {
 	[Route("api/[controller]")]
     [ApiController]
-    public class ExpensesController : ControllerBase
+	public class ExpensesController : ControllerBase
     {
         private readonly SapeinsDataDbContext _context;
         private readonly IMapper _mapper;
@@ -27,7 +28,8 @@ namespace SapiensDataAPI.Controllers
 
         // GET: api/Expenses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
+
+		public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
         {
             return await _context.Expenses.ToListAsync();
         }
