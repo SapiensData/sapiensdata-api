@@ -83,7 +83,7 @@ builder.Services.AddSwaggerGen(c =>
 					Id = "ApiKey"
 				}
 			},
-			new string[] { }
+			Array.Empty<string>()
 		}
 	});
 });
