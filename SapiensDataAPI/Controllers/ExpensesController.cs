@@ -14,19 +14,13 @@ namespace SapiensDataAPI.Controllers
 {
 	[Route("api/[controller]")]
     [ApiController]
-	public class ExpensesController : ControllerBase
+	public class ExpensesController(SapeinsDataDbContext context, IMapper mapper) : ControllerBase
     {
-        private readonly SapeinsDataDbContext _context;
-        private readonly IMapper _mapper;
+        private readonly SapeinsDataDbContext _context = context;
+        private readonly IMapper _mapper = mapper;
 
-        public ExpensesController(SapeinsDataDbContext context, IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
-
-        // GET: api/Expenses
-        [HttpGet]
+		// GET: api/Expenses
+		[HttpGet]
 
 		public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
         {
