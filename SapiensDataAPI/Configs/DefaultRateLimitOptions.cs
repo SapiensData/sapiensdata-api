@@ -12,7 +12,7 @@ namespace SapiensDataAPI.Configs
 		public int SegmentsPerWindow { get; set; } = 8;
 		public int TokenLimit { get; set; } = 10;
 		public int TokensPerPeriod { get; set; } = 4;
-		public bool AutoReplenishment { get; set; } = false;
+		public bool AutoReplenishment { get; set; }
 		public QueueProcessingOrder QueueProcessingOrder { get; set; } = QueueProcessingOrder.OldestFirst;
 	}
 }
