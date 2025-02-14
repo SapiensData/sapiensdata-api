@@ -9,16 +9,10 @@ namespace SapiensDataAPI.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class IncomesController : ControllerBase
+	public class IncomesController(SapeinsDataDbContext context, IMapper mapper) : ControllerBase
 	{
-		private readonly SapeinsDataDbContext _context;
-		private readonly IMapper _mapper;
-
-		public IncomesController(SapeinsDataDbContext context, IMapper mapper)
-		{
-			_context = context;
-			_mapper = mapper;
-		}
+		private readonly SapeinsDataDbContext _context = context;
+		private readonly IMapper _mapper = mapper;
 
 		// GET: api/Incomes
 		[HttpGet]
