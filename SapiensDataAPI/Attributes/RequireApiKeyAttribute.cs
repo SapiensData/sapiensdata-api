@@ -14,10 +14,7 @@ namespace SapiensDataAPI.Attributes
 		public override void OnActionExecuting(ActionExecutingContext context)
 		{
 			// Get the IConfiguration instance using the IServiceProvider
-			if (_configuration == null)
-			{
-				_configuration = context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
-			}
+			_configuration ??= context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
 
 			if (context.HttpContext.Request.Headers.TryGetValue("Very-cool-api-key", out var apiKey))
 			{
