@@ -10,6 +10,7 @@ using SapiensDataAPI.Dtos.Auth.Request;
 using SapiensDataAPI.Dtos.ImageUploader.Request;
 using SapiensDataAPI.Models;
 using SapiensDataAPI.Services.JwtToken;
+using System.Globalization;
 using System.Text.Json;
 
 namespace SapiensDataAPI.Controllers
@@ -17,28 +18,18 @@ namespace SapiensDataAPI.Controllers
     // Define the route for the controller and mark it as an API controller
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController(UserManager<ApplicationUserModel> userManager, RoleManager<IdentityRole> roleManager, IJwtTokenService jwtTokenService, SapeinsDataDbContext context, IMapper mapper) : ControllerBase
     {
         // Dependency injection for UserManager, RoleManager, and IJwtTokenService
-        private readonly UserManager<ApplicationUserModel> _userManager;
+        private readonly UserManager<ApplicationUserModel> _userManager = userManager;
 
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly IJwtTokenService _jwtTokenService;
-        private readonly SapeinsDataDbContext _context;
-        private readonly IMapper _mapper;
+        private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+        private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
+        private readonly SapeinsDataDbContext _context = context;
+        private readonly IMapper _mapper = mapper;
 
-        // Constructor to initialize the injected services
-        public AccountController(UserManager<ApplicationUserModel> userManager, RoleManager<IdentityRole> roleManager, IJwtTokenService jwtTokenService, SapeinsDataDbContext context, IMapper mapper)
-        {
-            _userManager = userManager;
-            _roleManager = roleManager;
-            _jwtTokenService = jwtTokenService;
-            _context = context;
-            _mapper = mapper;
-        }
-
-        // Get all users and their roles
-        [HttpGet("get-all-users")]
+		// Get all users and their roles
+		[HttpGet("get-all-users")]
         public async Task<IActionResult> GetUsers()
         {
             var users = await _userManager.Users.ToListAsync(); // Retrieve all users
@@ -177,7 +168,7 @@ namespace SapiensDataAPI.Controllers
             }
 
             var extension = Path.GetExtension(image.Image.FileName);
-            var newFileName = "profile-picture_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + extension;
+			var newFileName = "profile-picture_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + extension;
 
             var filePath = Path.Combine(uploadsFolderPath, newFileName);
 
@@ -191,7 +182,6 @@ namespace SapiensDataAPI.Controllers
             {
                 return NotFound("User was not found.");
             }
-            var userId = user.Id;
 
             user.ProfilePicturePath = filePath;
             _context.Update(user);
