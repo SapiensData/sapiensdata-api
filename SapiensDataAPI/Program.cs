@@ -1,6 +1,5 @@
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity; // Import Identity for user and role management
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -194,16 +193,13 @@ builder.Services.AddRateLimiter(options =>
 });
 
 // Authorization Policies
-builder.Services.AddAuthorizationBuilder()
-							 .AddPolicy("SuperAdmin", policy => policy.RequireRole("SuperAdmin"))
-							 .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
-							 .AddPolicy("NormalUser", policy => policy.RequireRole("NormalUser"))
-							 .AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead"))
-							 .AddPolicy("Guest", policy => policy.RequireRole("Guest"))
-							 .AddPolicy("Moderator", policy => policy.RequireRole("Moderator"))
-							 .AddPolicy("Developer", policy => policy.RequireRole("Developer"))
-							 .AddPolicy("Tester", policy => policy.RequireRole("Tester"))
-							 .AddPolicy("DataScientist", policy => policy.RequireRole("DataScientist"));
+var roles = new[] { "SuperAdmin", "Admin", "NormalUser", "TeamLead", "Guest", "Moderator", "Developer", "Tester", "DataScientist" };
+
+foreach (var role in roles)
+{
+	builder.Services.AddAuthorizationBuilder()
+		.AddPolicy(role, policy => policy.RequireRole(role));
+}
 
 // Add Scoped services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>(); // Add JwtTokenService to the service collection with Scoped lifetime
@@ -221,7 +217,7 @@ if (app.Environment.IsDevelopment()) // Check if the application is in developme
 using (var scope = app.Services.CreateScope()) // Create a scope for dependency injection
 {
 	var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(); // Get the RoleManager service
-	var roles = new[] { "Admin", "NormalUser", "SuperAdmin", "Moderator", "TeamLead", "Developer", "Tester", "Guest", "DataScientist" }; // Define a list of roles
+	//var roles = new[] { "Admin", "NormalUser", "SuperAdmin", "Moderator", "TeamLead", "Developer", "Tester", "Guest", "DataScientist" }; // Define a list of roles
 	foreach (var role in roles)
 	{
 		if (!await roleManager.RoleExistsAsync(role)) // Check if the role exists
