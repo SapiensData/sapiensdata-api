@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens; // Import for security token handling
 using SapiensDataAPI.Dtos.Auth.Request; // Import request DTOs for authentication
 using SapiensDataAPI.Dtos.Auth.Response; // Import response DTOs for authentication
 using SapiensDataAPI.Models; // Import user model
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt; // Import for handling JWT tokens
 using System.Security.Claims; // Import for handling claims in JWT
 using System.Text;
@@ -11,16 +12,10 @@ using System.Text.Json; // Import for encoding the JWT key
 
 namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 {
-	public class JwtTokenService : IJwtTokenService // Implement the IJwtTokenService interface
+	public class JwtTokenService(UserManager<ApplicationUserModel> userManager, IConfiguration configuration) : IJwtTokenService // Implement the IJwtTokenService interface
 	{
-		private readonly UserManager<ApplicationUserModel> _userManager; // User manager for managing user data and roles
-		private readonly IConfiguration _configuration; // Configuration to access settings like JWT key, issuer, etc.
-
-		public JwtTokenService(UserManager<ApplicationUserModel> userManager, IConfiguration configuration) // Constructor with DI for UserManager and Configuration
-		{
-			_userManager = userManager; // Initialize the user manager
-			_configuration = configuration; // Initialize the configuration
-		}
+		private readonly UserManager<ApplicationUserModel> _userManager = userManager; // User manager for managing user data and roles
+		private readonly IConfiguration _configuration = configuration; // Configuration to access settings like JWT key, issuer, etc.
 
 		public async Task<string> GenerateToken(ApplicationUserModel user) // Method to generate a JWT token
 		{
@@ -35,8 +30,8 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 			// Create claims list
 			var claims = new List<Claim>
 			{
-				new Claim(JwtRegisteredClaimNames.Sub, user.UserName), // Add user's username as a claim
-				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Add a unique token ID
+				new(JwtRegisteredClaimNames.Sub, user.UserName), // Add user's username as a claim
+				new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Add a unique token ID
             };
 
 			// Add roles as claims
@@ -58,7 +53,7 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 				issuer: _configuration["Jwt:Issuer"], // Define the token issuer
 				audience: _configuration["Jwt:Audience"], // Define the token audience
 				claims: claims, // Pass the claims into the token
-				expires: DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"])), // Set token expiration time
+				DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"], CultureInfo.InvariantCulture)), // Set token expiration time
 				signingCredentials: creds); // Pass signing credentials
 
 			// Return the generated token
@@ -104,7 +99,7 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 				return new RefreshTokenResponseDto
 				{
 					IsValid = true, // Set token as valid
-					Claims = principal.Claims.Select(c => new ClaimDto { Type = c.Type, Value = c.Value }).ToList() // Map claims to a list of ClaimDto
+					Claims = [.. principal.Claims.Select(c => new ClaimDto { Type = c.Type, Value = c.Value })] // Map claims to a list of ClaimDto
 				};
 			}
 			catch (Exception ex) // Catch any exceptions during token validation

@@ -15,6 +15,7 @@ using SapiensDataAPI.Dtos.Receipt.Response;
 using SapiensDataAPI.Models;
 using SapiensDataAPI.Services.JwtToken;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
 
@@ -66,7 +67,7 @@ namespace SapiensDataAPI.Controllers
 			var correctedStoreName = receiptVailidation.Store.Name.Replace(' ', '-');
 
 			var extension = Path.GetExtension(filePath);
-			var newFileName = correctedStoreName + "_" + receiptVailidation.Receipt.BuyDatetime.ToString("yyyyMMdd_HHmmss") + extension;
+			var newFileName = correctedStoreName + "_" + receiptVailidation.Receipt.BuyDatetime.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + extension;
 
 			// Create the new path by combining the directory and new file name
 			string newPath = Path.Combine(directory, newFileName);
@@ -120,7 +121,7 @@ namespace SapiensDataAPI.Controllers
 			await _context.Products.AddRangeAsync(products);
 			await _context.SaveChangesAsync();
 
-			List<int> productIds = products.Select(p => p.ProductId).ToList();
+			List<int> productIds = [.. products.Select(p => p.ProductId)];
 
 			List<ReceiptProduct> receiptProducts = new(receiptVailidation.Product.Count);
 			foreach (var item in productIds)
@@ -311,7 +312,7 @@ namespace SapiensDataAPI.Controllers
 				.Where(p => productsReceiptsProductsIds.Contains(p.ProductId))
 				.ToListAsync();
 
-			List<ProductV> productVs = new List<ProductV>(products.Count);
+			List<ProductV> productVs = new(products.Count);
 
 			foreach (var product in products)
 			{
@@ -322,7 +323,7 @@ namespace SapiensDataAPI.Controllers
 				.Where(tr => tr.ReceiptId == receipt.ReceiptId)
 				.ToListAsync();
 
-			List<TaxRateV> taxRatesVs = new List<TaxRateV>(taxRates.Count);
+			List<TaxRateV> taxRatesVs = new(taxRates.Count);
 
 			foreach (var taxRate in taxRates)
 			{
@@ -333,7 +334,7 @@ namespace SapiensDataAPI.Controllers
 				.Where(trd => trd.ReceiptId == receipt.ReceiptId)
 				.ToListAsync();
 
-			List<ReceiptTaxDetailV> receiptTaxDetailVs = new List<ReceiptTaxDetailV>(receiptTaxDetails.Count);
+			List<ReceiptTaxDetailV> receiptTaxDetailVs = new(receiptTaxDetails.Count);
 
 			foreach (var receiptTaxDetail in receiptTaxDetails)
 			{
@@ -428,7 +429,7 @@ namespace SapiensDataAPI.Controllers
 			}
 
 			var extension = Path.GetExtension(image.Image.FileName);
-			var newFileName = "to_process_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + extension;
+			var newFileName = "to_process_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + extension;
 
 			var filePath = Path.Combine(uploadsFolderPath, newFileName);
 
@@ -446,7 +447,7 @@ namespace SapiensDataAPI.Controllers
 
 			var EXAMPLEReceiptDto = new ReceiptDto
 			{
-				BuyDatetime = DateTime.Now,
+				BuyDatetime = DateTime.UtcNow,
 				TraceNumber = "ABC12345",
 				TotalAmount = 150.00m,
 				CashbackAmount = 5.00m,
@@ -484,7 +485,7 @@ namespace SapiensDataAPI.Controllers
 
 			var parts = filePath.Split(Path.DirectorySeparatorChar);
 			var lastParts = parts.Skip(Math.Max(0, parts.Length - 6));
-			var pathForPython = Path.Combine(lastParts.ToArray());
+			var pathForPython = Path.Combine([.. lastParts]);
 			pathForPython = pathForPython.Replace("\\", "/");
 
 			string? parameter = pathForPython ?? null;  // The parameter you want to pass to the Python script
