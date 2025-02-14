@@ -21,7 +21,6 @@ namespace SapiensDataAPI.Controllers
 
 		// GET: api/Expenses
 		[HttpGet]
-
 		public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
         {
             return await _context.Expenses.ToListAsync();
