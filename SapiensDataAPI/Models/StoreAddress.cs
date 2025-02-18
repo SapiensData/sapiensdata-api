@@ -15,9 +15,9 @@ public partial class StoreAddress
 
     public string? AddressType { get; set; } = string.Empty;
 
-    public DateTime? CreatedAt { get; set; } = DateTime.Now;
+    public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public DateTime? UpdatedAt { get; set; } = DateTime.Now;
+    public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public virtual Address? Address { get; set; }
 

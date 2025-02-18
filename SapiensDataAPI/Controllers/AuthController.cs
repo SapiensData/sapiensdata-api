@@ -9,16 +9,10 @@ namespace SapiensDataAPI.Controllers // Define the namespace for the AuthControl
 {
 	[Route("api/[controller]")] // Define the route template for this controller
 	[ApiController] // Mark this class as an API controller
-	public class AuthController : ControllerBase // Inherit from ControllerBase for handling API requests
+	public class AuthController(UserManager<ApplicationUserModel> userManager, IJwtTokenService jwtTokenService) : ControllerBase // Inherit from ControllerBase for handling API requests
 	{
-		private readonly UserManager<ApplicationUserModel> _userManager; // Dependency injection for managing users
-		private readonly IJwtTokenService _jwtTokenService; // Dependency injection for handling JWT token generation
-
-		public AuthController(UserManager<ApplicationUserModel> userManager, IJwtTokenService jwtTokenService) // Constructor to inject the services
-		{
-			_userManager = userManager; // Initialize UserManager
-			_jwtTokenService = jwtTokenService; // Initialize JwtTokenService
-		}
+		private readonly UserManager<ApplicationUserModel> _userManager = userManager; // Dependency injection for managing users
+		private readonly IJwtTokenService _jwtTokenService = jwtTokenService; // Dependency injection for handling JWT token generation
 
 		[HttpPost("register-user")] // Define an HTTP POST endpoint for registering a user
 		public async Task<IActionResult> Register([FromBody] RegisterRequestDto model) // Action method for user registration
@@ -69,7 +63,6 @@ namespace SapiensDataAPI.Controllers // Define the namespace for the AuthControl
 			if (!result.Succeeded) // If user creation fails
 				return BadRequest(result.Errors); // Return bad request with the errors
 
-
 			// Assign 'NormalUser' role by default
 			var roleResult = await _userManager.AddToRoleAsync(user, "NormalUser"); // Add the user to the 'NormalUser' role
 			if (!roleResult.Succeeded) // If role assignment fails
@@ -97,7 +90,6 @@ namespace SapiensDataAPI.Controllers // Define the namespace for the AuthControl
 			if (string.IsNullOrEmpty(token)) // If token generation fails
 				return StatusCode(500, "An error occurred while generating the token."); // Return internal server error
 
-			var userRoles = await _userManager.GetRolesAsync(user); // Retrieve the roles assigned to the user
 			return Ok(new { Token = token, Message = "Login successful." }); // Return success response with the token and roles
 		}
 	}

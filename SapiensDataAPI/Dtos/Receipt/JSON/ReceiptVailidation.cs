@@ -129,7 +129,7 @@ namespace SapiensDataAPI.Dtos.Receipt.JSON
 	public class ReceiptV
 	{
 		[JsonPropertyName("buy_datetime")]
-		public DateTime BuyDatetime { get; set; } = DateTime.Now;
+		public DateTime BuyDatetime { get; set; } = DateTime.UtcNow;
 
 		[JsonPropertyName("trace_number")]
 		public string TraceNumber { get; set; } = string.Empty;
