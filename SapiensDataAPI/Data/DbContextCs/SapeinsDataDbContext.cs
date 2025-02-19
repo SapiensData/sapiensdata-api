@@ -118,6 +118,8 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 
 	public virtual DbSet<ReceiptProduct> ReceiptProducts { get; set; }
 
+	public virtual DbSet<EncryptionTest> EncryptionTests { get; set; }
+
 	protected override void OnModelCreating(ModelBuilder builder)
 	{
 		builder.UseEncryption(_provider);
