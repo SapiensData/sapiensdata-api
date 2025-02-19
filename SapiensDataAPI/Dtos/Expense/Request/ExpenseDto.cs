@@ -2,7 +2,7 @@
 {
 	public class ExpenseDto
 	{
-		public string UserId { get; set; }
+		public required string UserId { get; set; }
 
 		public string? SourceUserId { get; set; }
 
