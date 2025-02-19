@@ -119,7 +119,6 @@ namespace SapiensDataAPI.Controllers
 			}
 
 			await _context.Products.AddRangeAsync(products);
-			await _context.SaveChangesAsync();
 
 			List<int> productIds = [.. products.Select(p => p.ProductId)];
 
@@ -134,36 +133,39 @@ namespace SapiensDataAPI.Controllers
 			}
 
 			await _context.ReceiptProducts.AddRangeAsync(receiptProducts);
-			await _context.SaveChangesAsync();
 
 			var taxRate = _mapper.Map<TaxRate>(receiptVailidation.TaxRate);
 			taxRate.ReceiptId = receipts[0].ReceiptId;
 			await _context.AddAsync(taxRate);
-			await _context.SaveChangesAsync();
 
 			var receiptTaxDetails = _mapper.Map<ReceiptTaxDetail>(receiptVailidation.ReceiptTaxDetail);
 			receiptTaxDetails.ReceiptId = receipts[0].ReceiptId;
 			receiptTaxDetails.TaxRateId = taxRate.TaxRateId;
 			await _context.AddAsync(receiptTaxDetails);
-			await _context.SaveChangesAsync();
 
 			var address = _mapper.Map<Address>(receiptVailidation.Store);
 			await _context.AddAsync(address);
-			await _context.SaveChangesAsync();
 
 			var store = _mapper.Map<Store>(receiptVailidation.Store);
 			await _context.AddAsync(store);
-			await _context.SaveChangesAsync();
 
 			receipts[0].StoreId = store.StoreId;
 			_context.Update(receipts[0]);
+
+			var storeAddress = new StoreAddress
+			{
+				StoreId = store.StoreId,
+				AddressId = address.AddressId,
+				AddressType = receiptVailidation.Store.AddressType
+			};
+			await _context.AddAsync(storeAddress);
 
 			try
 			{
 				await _context.SaveChangesAsync();
 			}
 			catch (DbUpdateConcurrencyException)
-			{	
+			{
 				if (!ReceiptExists(receipts[0].ReceiptId))
 				{
 					return NotFound();
@@ -174,16 +176,9 @@ namespace SapiensDataAPI.Controllers
 				}
 			}
 
-			var storeAddress = new StoreAddress
-			{
-				StoreId = store.StoreId,
-				AddressId = address.AddressId,
-				AddressType = receiptVailidation.Store.AddressType
-			};
-			await _context.AddAsync(storeAddress);
-			await _context.SaveChangesAsync();
+			return StatusCode(501, "Python path isn't implemented");
 
-			string workingDirectory = @"../../Analytics/";
+			/*string workingDirectory = @"../../Analytics/";
 			if (!Directory.Exists(workingDirectory))
 			{
 				return BadRequest($"Working directory not found: {workingDirectory}");
@@ -233,7 +228,7 @@ namespace SapiensDataAPI.Controllers
 				}
 			}
 
-			return Ok("Image is ok and updated");
+			return Ok("Image is ok and updated");*/
 		}
 
 		// GET: api/Receipts/5
