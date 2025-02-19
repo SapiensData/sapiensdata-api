@@ -401,7 +401,7 @@ namespace SapiensDataAPI.Controllers
 			if (image == null || image.Image.Length == 0)
 				return BadRequest("No image file provided.");
 
-			await Task.CompletedTask;
+			await Task.CompletedTask; // Delete this when the python path is implemented
 
 			return StatusCode(501, "Python path isn't implemented");
 
