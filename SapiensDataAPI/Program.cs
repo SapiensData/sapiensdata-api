@@ -9,6 +9,7 @@ using SapiensDataAPI.Attributes;
 using SapiensDataAPI.Configs;
 using SapiensDataAPI.Data.DbContextCs;
 using SapiensDataAPI.Models; // Import models, including ApplicationUserModel
+using SapiensDataAPI.Services.ByteArrayPlainTextConverter;
 using SapiensDataAPI.Services.JwtToken; // Import services, including JwtTokenService
 using System.Text; // Import for encoding JWT secret key
 
@@ -173,6 +174,11 @@ builder.Services.AddAuthentication(options =>
 			return Task.CompletedTask; // Complete the task after token validation
 		}
 	};
+});
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+	options.JsonSerializerOptions.Converters.Add(new ByteArrayPlainTextConverterService());
 });
 
 var defaultRateLimitName = "default";

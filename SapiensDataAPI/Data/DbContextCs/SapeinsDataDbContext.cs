@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using DotNetEnv;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SapiensDataAPI.Models;
 using SoftFluent.EntityFrameworkCore.DataEncryption;
@@ -15,12 +16,10 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 
 	public SapeinsDataDbContext()
 	{
-		var configuration = new ConfigurationBuilder()
-			.AddJsonFile("appsettings.json")
-			.Build();
+		Env.Load(".env");
 
-		var encryptionKey = configuration["Encryption:EncryptionKey"];
-		var encryptionIV = configuration["Encryption:EncryptionIV"];
+		var encryptionKey = Env.GetString("ENCRYPTION_KEY");
+		var encryptionIV = Env.GetString("ENCRYPTION_IV");
 
 		if (encryptionKey == null)
 		{
@@ -34,27 +33,51 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 
 		_encryptionKey = Encoding.UTF8.GetBytes(encryptionKey);
 		_encryptionIV = Encoding.UTF8.GetBytes(encryptionIV);
+
+		if (_encryptionKey.Length != 32)
+		{
+			throw new ArgumentException("Encryption key must be 32 bytes long.");
+		}
+
+		if (_encryptionIV.Length != 16)
+		{
+			throw new ArgumentException("Encryption IV must be 16 bytes long.");
+		}
+
 		_provider = new AesProvider(this._encryptionKey, this._encryptionIV);
 	}
 
-	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options, IConfiguration configuration)
+	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options)
 		: base(options)
 	{
-		var encryptionKey = configuration["Encryption:EncryptionKey"];
-		var encryptionIV = configuration["Encryption:EncryptionIV"];
+		Env.Load(".env");
+
+		var encryptionKey = Env.GetString("ENCRYPTION_KEY");
+		var encryptionIV = Env.GetString("ENCRYPTION_IV");
 
 		if (encryptionKey == null)
 		{
-			throw new ArgumentNullException(nameof(configuration) + ":ENCRYPTION_KEY", "Encryption key is not configured properly.");
+			throw new InvalidOperationException("Encryption key is not configured properly.");
 		}
 
 		if (encryptionIV == null)
 		{
-			throw new ArgumentNullException(nameof(configuration) + ":ENCRYPTION_IV", "Encryption IV is not configured properly.");
+			throw new InvalidOperationException("Encryption IV is not configured properly.");
 		}
 
 		_encryptionKey = Encoding.UTF8.GetBytes(encryptionKey);
 		_encryptionIV = Encoding.UTF8.GetBytes(encryptionIV);
+
+		if (_encryptionKey.Length != 32)
+		{
+			throw new ArgumentException("Encryption key must be 32 bytes long.");
+		}
+
+		if (_encryptionIV.Length != 16)
+		{
+			throw new ArgumentException("Encryption IV must be 16 bytes long.");
+		}
+
 		_provider = new AesProvider(this._encryptionKey, this._encryptionIV);
 	}
 
