@@ -1,6 +1,5 @@
 ﻿using DotNetEnv;
 using SoftFluent.EntityFrameworkCore.DataEncryption;
-using SoftFluent.EntityFrameworkCore.DataEncryption.Providers;
 using System.Security.Cryptography;
 using System.Text;
 
