@@ -5,7 +5,7 @@
 namespace SapiensDataAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class AddintermediatetableReceipt_ProducttoDB : Migration
+    public partial class AddIntermediateTableReceiptProductToDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

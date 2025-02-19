@@ -1,4 +1,6 @@
-﻿namespace SapiensDataAPI.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace SapiensDataAPI.Models
 {
 	public class ReceiptProduct
 	{
@@ -8,6 +10,7 @@
 		
 		public int ProductId { get; set; }
 
+		[Precision(18, 2)]
 		public decimal Discount { get; set; }
 
 		public virtual Receipt? Receipt { get; set; }

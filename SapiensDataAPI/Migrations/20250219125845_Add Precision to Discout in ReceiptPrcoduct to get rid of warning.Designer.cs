@@ -12,15 +12,15 @@ using SapiensDataAPI.Data.DbContextCs;
 namespace SapiensDataAPI.Migrations
 {
     [DbContext(typeof(SapeinsDataDbContext))]
-    [Migration("20241114070357_Add intermediate table Receipt_Product to DB")]
-    partial class AddIntermediateTableReceiptProductToDB
+    [Migration("20250219125845_Add Precision to Discout in ReceiptPrcoduct to get rid of warning")]
+    partial class AddPrecisiontoDiscoutinReceiptPrcoducttogetridofwarning
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -1609,6 +1609,7 @@ namespace SapiensDataAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReceiptProductId"));
 
                     b.Property<decimal>("Discount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
@@ -1623,7 +1624,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("ReceiptId");
 
-                    b.ToTable("ReceiptProduct");
+                    b.ToTable("ReceiptProducts");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.ReceiptTaxDetail", b =>
@@ -1832,10 +1833,6 @@ namespace SapiensDataAPI.Migrations
                     b.HasIndex("AddressId");
 
                     b.HasIndex("StoreId");
-
-                    b.HasIndex(new[] { "AddressType" }, "UQ__StoreAdd__071A9587EC1B4587")
-                        .IsUnique()
-                        .HasFilter("[address_type] IS NOT NULL");
 
                     b.ToTable("StoreAddress", (string)null);
                 });
