@@ -11,7 +11,6 @@ namespace SapiensDataAPI.Provider.EncryptionProvider
 
 		public const int InitializationVectorSize = 16;
 
-		private readonly byte[] _key = [];
 		private readonly CipherMode _mode = CipherMode.CBC;
 		private readonly PaddingMode _padding = PaddingMode.PKCS7;
 
