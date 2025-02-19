@@ -1,84 +1,25 @@
-﻿using DotNetEnv;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SapiensDataAPI.Models;
+using SapiensDataAPI.Provider.EncryptionProvider;
 using SoftFluent.EntityFrameworkCore.DataEncryption;
-using SoftFluent.EntityFrameworkCore.DataEncryption.Providers;
-using System.Text;
 
 namespace SapiensDataAPI.Data.DbContextCs;
 
 public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserModel>
 {
-	private readonly byte[] _encryptionKey;
-	private readonly byte[] _encryptionIV;
 	private readonly IEncryptionProvider _provider;
 
 	public SapeinsDataDbContext()
 	{
-		Env.Load(".env");
-
-		var encryptionKey = Env.GetString("ENCRYPTION_KEY");
-		var encryptionIV = Env.GetString("ENCRYPTION_IV");
-
-		if (encryptionKey == null)
-		{
-			throw new ArgumentNullException(nameof(encryptionKey), "Encryption key is not configured properly.");
-		}
-
-		if (encryptionIV == null)
-		{
-			throw new ArgumentNullException(nameof(encryptionIV), "Encryption IV is not configured properly.");
-		}
-
-		_encryptionKey = Encoding.UTF8.GetBytes(encryptionKey);
-		_encryptionIV = Encoding.UTF8.GetBytes(encryptionIV);
-
-		if (_encryptionKey.Length != 32)
-		{
-			throw new ArgumentException("Encryption key must be 32 bytes long.");
-		}
-
-		if (_encryptionIV.Length != 16)
-		{
-			throw new ArgumentException("Encryption IV must be 16 bytes long.");
-		}
-
-		_provider = new AesProvider(this._encryptionKey, this._encryptionIV);
+		_provider = new EncryptionProvider();
 	}
 
 	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options)
 		: base(options)
 	{
-		Env.Load(".env");
-
-		var encryptionKey = Env.GetString("ENCRYPTION_KEY");
-		var encryptionIV = Env.GetString("ENCRYPTION_IV");
-
-		if (encryptionKey == null)
-		{
-			throw new InvalidOperationException("Encryption key is not configured properly.");
-		}
-
-		if (encryptionIV == null)
-		{
-			throw new InvalidOperationException("Encryption IV is not configured properly.");
-		}
-
-		_encryptionKey = Encoding.UTF8.GetBytes(encryptionKey);
-		_encryptionIV = Encoding.UTF8.GetBytes(encryptionIV);
-
-		if (_encryptionKey.Length != 32)
-		{
-			throw new ArgumentException("Encryption key must be 32 bytes long.");
-		}
-
-		if (_encryptionIV.Length != 16)
-		{
-			throw new ArgumentException("Encryption IV must be 16 bytes long.");
-		}
-
-		_provider = new AesProvider(this._encryptionKey, this._encryptionIV);
+		_provider = new EncryptionProvider();
 	}
 
 	public virtual DbSet<Address> Addresses { get; set; }
@@ -1255,6 +1196,16 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.OnDelete(DeleteBehavior.ClientSetNull)
 				.HasConstraintName("FK__UserSessi__user___68487DD7");
 		});
+
+		var byteArrayComparer = new ValueComparer<byte[]>(
+			(a, b) => a != null && b != null && a.SequenceEqual(b),
+			a => a != null ? a.Aggregate(0, (acc, v) => HashCode.Combine(acc, v)) : 0,
+			a => a != null ? a.ToArray() : Array.Empty<byte>()
+		);
+
+		builder.Entity<EncryptionTest>()
+			.Property(e => e.StreetEncrypted)
+			.Metadata.SetValueComparer(byteArrayComparer);
 
 		//OnModelCreatingPartial(builder);
 	}
