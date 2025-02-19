@@ -401,7 +401,11 @@ namespace SapiensDataAPI.Controllers
 			if (image == null || image.Image.Length == 0)
 				return BadRequest("No image file provided.");
 
-			Env.Load(".env");
+			await Task.CompletedTask;
+
+			return StatusCode(501, "Python path isn't implemented");
+
+			/*Env.Load(".env");
 			var googleDrivePath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_BEGINNING_PATH");
 			if (googleDrivePath == null)
 			{
@@ -439,6 +443,7 @@ namespace SapiensDataAPI.Controllers
 				return NotFound("User was not found.");
 			}
 			var userId = user.Id;
+
 
 			var EXAMPLEReceiptDto = new ReceiptDto
 			{
@@ -513,7 +518,7 @@ namespace SapiensDataAPI.Controllers
 				}
 			}
 
-			return Ok("Image uploaded successfully.");
+			return Ok("Image uploaded successfully.");*/
 		}
 
 		// DELETE: api/Receipts/5
