@@ -444,7 +444,6 @@ namespace SapiensDataAPI.Controllers
 			}
 			var userId = user.Id;
 
-
 			var EXAMPLEReceiptDto = new ReceiptDto
 			{
 				BuyDatetime = DateTime.UtcNow,
