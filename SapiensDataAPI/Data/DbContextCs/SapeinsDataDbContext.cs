@@ -1,20 +1,61 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using SapiensDataAPI.Models;
+using SoftFluent.EntityFrameworkCore.DataEncryption;
+using SoftFluent.EntityFrameworkCore.DataEncryption.Providers;
+using System.Text;
 
 namespace SapiensDataAPI.Data.DbContextCs;
 
 public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserModel>
 {
+	private readonly byte[] _encryptionKey;
+	private readonly byte[] _encryptionIV;
+	private readonly IEncryptionProvider _provider;
+
 	public SapeinsDataDbContext()
 	{
+		var configuration = new ConfigurationBuilder()
+			.AddJsonFile("appsettings.json")
+			.Build();
+
+		var encryptionKey = configuration["ENCRYPTION_KEY"];
+		var encryptionIV = configuration["ENCRYPTION_IV"];
+
+		if (encryptionKey == null)
+		{
+			throw new ArgumentNullException(nameof(encryptionKey), "Encryption key is not configured properly.");
+		}
+
+		if (encryptionIV == null)
+		{
+			throw new ArgumentNullException(nameof(encryptionIV), "Encryption IV is not configured properly.");
+		}
+
+		_encryptionKey = Encoding.UTF8.GetBytes(encryptionKey);
+		_encryptionIV = Encoding.UTF8.GetBytes(encryptionIV);
+		_provider = new AesProvider(this._encryptionKey, this._encryptionIV);
 	}
 
-	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options)
+	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options, IConfiguration configuration)
 		: base(options)
 	{
+		var encryptionKey = configuration["ENCRYPTION_KEY"];
+		var encryptionIV = configuration["ENCRYPTION_IV"];
+
+		if (encryptionKey == null)
+		{
+			throw new ArgumentNullException(nameof(configuration) + ":ENCRYPTION_KEY", "Encryption key is not configured properly.");
+		}
+
+		if (encryptionIV == null)
+		{
+			throw new ArgumentNullException(nameof(configuration) + ":ENCRYPTION_IV", "Encryption IV is not configured properly.");
+		}
+
+		_encryptionKey = Encoding.UTF8.GetBytes(encryptionKey);
+		_encryptionIV = Encoding.UTF8.GetBytes(encryptionIV);
+		_provider = new AesProvider(this._encryptionKey, this._encryptionIV);
 	}
 
 	public virtual DbSet<Address> Addresses { get; set; }
@@ -79,6 +120,8 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 
 	protected override void OnModelCreating(ModelBuilder builder)
 	{
+		builder.UseEncryption(_provider);
+
 		base.OnModelCreating(builder);
 
 		builder.Entity<Address>(entity =>
@@ -1188,8 +1231,8 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__UserSessi__user___68487DD7");
 		});
 
-		OnModelCreatingPartial(builder);
+		//OnModelCreatingPartial(builder);
 	}
 
-	partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+	//private partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
