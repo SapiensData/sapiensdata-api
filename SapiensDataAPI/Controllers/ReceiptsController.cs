@@ -10,13 +10,10 @@ using SapiensDataAPI.Data.DbContextCs;
 using SapiensDataAPI.Dtos;
 using SapiensDataAPI.Dtos.ImageUploader.Request;
 using SapiensDataAPI.Dtos.Receipt.JSON;
-using SapiensDataAPI.Dtos.Receipt.Request;
 using SapiensDataAPI.Dtos.Receipt.Response;
 using SapiensDataAPI.Models;
 using SapiensDataAPI.Services.JwtToken;
-using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Text.Json;
 
 namespace SapiensDataAPI.Controllers

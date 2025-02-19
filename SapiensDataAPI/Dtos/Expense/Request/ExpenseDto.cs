@@ -1,10 +1,8 @@
-﻿using SapiensDataAPI.Models;
-
-namespace SapiensDataAPI.Dtos.Expense.Request
+﻿namespace SapiensDataAPI.Dtos.Expense.Request
 {
 	public class ExpenseDto
 	{
-		public required string UserId { get; set; }
+		public string UserId { get; set; }
 
 		public string? SourceUserId { get; set; }
 

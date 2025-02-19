@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Elfie.Serialization;
 using SapiensDataAPI.Dtos.Expense.Request;
 using SapiensDataAPI.Dtos.Income.Request;
 using SapiensDataAPI.Dtos.Receipt.JSON;

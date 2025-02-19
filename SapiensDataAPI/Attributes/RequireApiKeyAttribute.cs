@@ -1,9 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using DotNetEnv;  // Import your ApiSettings class
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using SapiensDataAPI.Models;
-using SapiensDataAPI.Dtos;
-using DotNetEnv;  // Import your ApiSettings class
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace SapiensDataAPI.Attributes
 {

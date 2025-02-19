@@ -217,7 +217,7 @@ if (app.Environment.IsDevelopment()) // Check if the application is in developme
 using (var scope = app.Services.CreateScope()) // Create a scope for dependency injection
 {
 	var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(); // Get the RoleManager service
-	//var roles = new[] { "Admin", "NormalUser", "SuperAdmin", "Moderator", "TeamLead", "Developer", "Tester", "Guest", "DataScientist" }; // Define a list of roles
+																							 //var roles = new[] { "Admin", "NormalUser", "SuperAdmin", "Moderator", "TeamLead", "Developer", "Tester", "Guest", "DataScientist" }; // Define a list of roles
 	foreach (var role in roles)
 	{
 		if (!await roleManager.RoleExistsAsync(role)) // Check if the role exists
