@@ -19,8 +19,8 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 			.AddJsonFile("appsettings.json")
 			.Build();
 
-		var encryptionKey = configuration["ENCRYPTION_KEY"];
-		var encryptionIV = configuration["ENCRYPTION_IV"];
+		var encryptionKey = configuration["Encryption:EncryptionKey"];
+		var encryptionIV = configuration["Encryption:EncryptionIV"];
 
 		if (encryptionKey == null)
 		{
@@ -40,8 +40,8 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options, IConfiguration configuration)
 		: base(options)
 	{
-		var encryptionKey = configuration["ENCRYPTION_KEY"];
-		var encryptionIV = configuration["ENCRYPTION_IV"];
+		var encryptionKey = configuration["Encryption:EncryptionKey"];
+		var encryptionIV = configuration["Encryption:EncryptionIV"];
 
 		if (encryptionKey == null)
 		{
