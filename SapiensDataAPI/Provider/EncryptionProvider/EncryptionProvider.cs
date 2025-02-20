@@ -19,10 +19,6 @@ namespace SapiensDataAPI.Provider.EncryptionProvider
 
 		private Aes CreateCryptographyProvider(CipherMode mode, PaddingMode padding)
 		{
-			//Env.Load(".env");
-
-			//var encryptionKey = Env.GetString("ENCRYPTION_KEY") ?? throw new InvalidOperationException("Encryption key is not configured properly.");
-
 			var encryptionKey = _globalVariableService.SymmetricKey;
 
 			var encryptionKeyBytes = Encoding.UTF8.GetBytes(encryptionKey);
