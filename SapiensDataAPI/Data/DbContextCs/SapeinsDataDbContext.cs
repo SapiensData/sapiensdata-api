@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SapiensDataAPI.Models;
 using SapiensDataAPI.Provider.EncryptionProvider;
+using SapiensDataAPI.Services.GlobalVariable;
 using SoftFluent.EntityFrameworkCore.DataEncryption;
 
 namespace SapiensDataAPI.Data.DbContextCs;
@@ -11,15 +12,15 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 {
 	private readonly IEncryptionProvider _provider;
 
-	public SapeinsDataDbContext()
+	public SapeinsDataDbContext(GlobalVariableService globalVariableService)
 	{
-		_provider = new EncryptionProvider();
+		_provider = new EncryptionProvider(globalVariableService);
 	}
 
-	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options)
+	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options, GlobalVariableService globalVariableService)
 		: base(options)
 	{
-		_provider = new EncryptionProvider();
+		_provider = new EncryptionProvider(globalVariableService);
 	}
 
 	public virtual DbSet<Address> Addresses { get; set; }

@@ -1,12 +1,15 @@
 ﻿using DotNetEnv;
+using SapiensDataAPI.Services.GlobalVariable;
 using SoftFluent.EntityFrameworkCore.DataEncryption;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace SapiensDataAPI.Provider.EncryptionProvider
 {
-	public class EncryptionProvider : IEncryptionProvider
+	public class EncryptionProvider(GlobalVariableService globalVariableService) : IEncryptionProvider
 	{
+		private readonly GlobalVariableService _globalVariableService = globalVariableService;
+
 		public const int AesBlockSize = 128;
 
 		public const int InitializationVectorSize = 16;
@@ -14,11 +17,13 @@ namespace SapiensDataAPI.Provider.EncryptionProvider
 		private readonly CipherMode _mode = CipherMode.CBC;
 		private readonly PaddingMode _padding = PaddingMode.PKCS7;
 
-		private static Aes CreateCryptographyProvider(CipherMode mode, PaddingMode padding)
+		private Aes CreateCryptographyProvider(CipherMode mode, PaddingMode padding)
 		{
-			Env.Load(".env");
+			//Env.Load(".env");
 
-			var encryptionKey = Env.GetString("ENCRYPTION_KEY") ?? throw new InvalidOperationException("Encryption key is not configured properly.");
+			//var encryptionKey = Env.GetString("ENCRYPTION_KEY") ?? throw new InvalidOperationException("Encryption key is not configured properly.");
+
+			var encryptionKey = _globalVariableService.SymmetricKey;
 
 			var encryptionKeyBytes = Encoding.UTF8.GetBytes(encryptionKey);
 

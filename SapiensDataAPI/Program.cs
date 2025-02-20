@@ -10,6 +10,7 @@ using SapiensDataAPI.Configs;
 using SapiensDataAPI.Data.DbContextCs;
 using SapiensDataAPI.Models; // Import models, including ApplicationUserModel
 using SapiensDataAPI.Services.ByteArrayPlainTextConverter;
+using SapiensDataAPI.Services.GlobalVariable;
 using SapiensDataAPI.Services.JwtToken; // Import services, including JwtTokenService
 using System.Text; // Import for encoding JWT secret key
 
@@ -32,6 +33,7 @@ builder.Services.AddEndpointsApiExplorer(); // Add API explorer for endpoints
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddScoped<RequireApiKeyAttribute>();
+builder.Services.AddSingleton<GlobalVariableService>();
 
 builder.Services.AddSwaggerGen(c =>
 {
