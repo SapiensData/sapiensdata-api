@@ -7,7 +7,7 @@ namespace SapiensDataAPI.Models
 		public int ReceiptProductId { get; set; }
 
 		public int ReceiptId { get; set; }
-		
+
 		public int ProductId { get; set; }
 
 		[Precision(18, 2)]
