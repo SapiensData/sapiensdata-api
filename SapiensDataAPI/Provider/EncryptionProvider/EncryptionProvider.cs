@@ -55,7 +55,7 @@ namespace SapiensDataAPI.Provider.EncryptionProvider
 			// Write the IV at the beginning of the stream
 			memoryStream.Write(aes.IV, 0, aes.IV.Length);
 
-			using (CryptoStream cryptoStream = new(memoryStream, encryptor, CryptoStreamMode.Write))
+			using (CryptoStream cryptoStream = new(memoryStream, encryptor, CryptoStreamMode.Write, leaveOpen: true))
 			{
 				cryptoStream.Write(input, 0, input.Length);
 				cryptoStream.FlushFinalBlock();
@@ -72,9 +72,14 @@ namespace SapiensDataAPI.Provider.EncryptionProvider
 				return [];
 			}
 
+			if (input == null || input.Length < InitializationVectorSize)
+			{
+				throw new ArgumentException("Input is too short to contain a valid IV.");
+			}
+
 			using MemoryStream memoryStream = new(input);
 			// Extract the IV from the first 16 bytes
-			byte[] iv = new byte[16];
+			byte[] iv = new byte[InitializationVectorSize];
 			int bytesRead = memoryStream.Read(iv, 0, iv.Length);
 			if (bytesRead != iv.Length)
 			{
@@ -86,7 +91,7 @@ namespace SapiensDataAPI.Provider.EncryptionProvider
 			aes.IV = iv;
 
 			using ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-			using CryptoStream cryptoStream = new(memoryStream, decryptor, CryptoStreamMode.Read);
+			using CryptoStream cryptoStream = new(memoryStream, decryptor, CryptoStreamMode.Read, leaveOpen: true);
 			using MemoryStream outputStream = new();
 			cryptoStream.CopyTo(outputStream);
 			return outputStream.ToArray();
