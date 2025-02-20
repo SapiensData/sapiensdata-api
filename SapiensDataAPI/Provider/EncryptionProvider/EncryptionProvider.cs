@@ -1,5 +1,4 @@
-﻿using DotNetEnv;
-using SapiensDataAPI.Services.GlobalVariable;
+﻿using SapiensDataAPI.Services.GlobalVariable;
 using SoftFluent.EntityFrameworkCore.DataEncryption;
 using System.Security.Cryptography;
 using System.Text;
