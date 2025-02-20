@@ -20,7 +20,7 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 		public async Task<string> GenerateToken(ApplicationUserModel user) // Method to generate a JWT token
 		{
 			// Get user roles
-			var roles = await _userManager.GetRolesAsync(user);
+			IList<string> roles = await _userManager.GetRolesAsync(user);
 
 			if (string.IsNullOrEmpty(user.UserName))
 			{
@@ -28,28 +28,27 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 			}
 
 			// Create claims list
-			var claims = new List<Claim>
-			{
+			List<Claim> claims =
+			[
 				new(JwtRegisteredClaimNames.Sub, user.UserName), // Add user's username as a claim
-				new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Add a unique token ID
-            };
+				new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+				// Add roles as claims
+				.. roles.Select(role => new Claim("role", role)) // Add each user role as a claim, // Add a unique token ID
+            ];
 
-			// Add roles as claims
-			claims.AddRange(roles.Select(role => new Claim("role", role))); // Add each user role as a claim
-
-			var jwtKey = _configuration["Jwt:Key"];
+			string? jwtKey = _configuration["Jwt:Key"];
 
 			if (string.IsNullOrEmpty(jwtKey))
 			{
 				throw new InvalidOperationException("JWT Key is not configured in the settings.");
 			}
 
-			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)); // Generate the symmetric security key
+			SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(jwtKey)); // Generate the symmetric security key
 
-			var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Create signing credentials using HMAC SHA256
+			SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256); // Create signing credentials using HMAC SHA256
 
 			// Create the token
-			var token = new JwtSecurityToken(
+			JwtSecurityToken token = new(
 				issuer: _configuration["Jwt:Issuer"], // Define the token issuer
 				audience: _configuration["Jwt:Audience"], // Define the token audience
 				claims: claims, // Pass the claims into the token
@@ -62,10 +61,10 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 
 		public async Task<RefreshTokenResponseDto> VerifyToken(TokenRequestDto tokenRequest) // Method to verify a token
 		{
-			var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured.");
+			string jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured.");
 
-			var tokenHandler = new JwtSecurityTokenHandler(); // Instantiate a token handler
-			var tokenValidationParameters = new TokenValidationParameters
+			JwtSecurityTokenHandler tokenHandler = new(); // Instantiate a token handler
+			TokenValidationParameters tokenValidationParameters = new()
 			{
 				ValidateIssuerSigningKey = true, // Validate the signing key of the token
 				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), // Set the signing key from configuration
@@ -79,10 +78,10 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 			try
 			{
 				//var principal = tokenHandler.ValidateToken(tokenRequest.Token, tokenValidationParameters, out var validatedToken); // Validate the token
-				var (principal, validatedToken) = await Task.Run(() =>
+				(ClaimsPrincipal principal, SecurityToken validatedToken) = await Task.Run(() =>
 				{
 					// Validate the token and capture principal and validatedToken
-					var principal = tokenHandler.ValidateToken(tokenRequest.Token, tokenValidationParameters, out var validatedToken);
+					ClaimsPrincipal principal = tokenHandler.ValidateToken(tokenRequest.Token, tokenValidationParameters, out SecurityToken? validatedToken);
 					return (principal, validatedToken);
 				});
 
@@ -121,22 +120,22 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 			}
 
 			// Split the token into parts
-			var parts = token.Split('.');
+			string[] parts = token.Split('.');
 			if (parts.Length < 3)
 			{
 				throw new ArgumentException("Invalid JWT token format.");
 			}
 
 			// Decode the payload (second part) from Base64
-			var payload = parts[1];
-			var base64Payload = payload.Replace('-', '+').Replace('_', '/'); // Standard Base64 format
-			var padding = 4 - base64Payload.Length % 4;
+			string payload = parts[1];
+			string base64Payload = payload.Replace('-', '+').Replace('_', '/'); // Standard Base64 format
+			int padding = 4 - (base64Payload.Length % 4);
 			if (padding < 4)
 			{
 				base64Payload += new string('=', padding);
 			}
 
-			var bytes = Convert.FromBase64String(base64Payload);
+			byte[] bytes = Convert.FromBase64String(base64Payload);
 
 			// Parse and return the decoded JSON
 			return JsonDocument.Parse(bytes);

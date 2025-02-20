@@ -13,10 +13,10 @@ namespace SapiensDataAPI.Attributes
 			// Get the IConfiguration instance using the IServiceProvider
 			_configuration ??= context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
 
-			if (context.HttpContext.Request.Headers.TryGetValue("Very-cool-api-key", out var apiKey))
+			if (context.HttpContext.Request.Headers.TryGetValue("Very-cool-api-key", out Microsoft.Extensions.Primitives.StringValues apiKey))
 			{
 				Env.Load(".env");
-				var expectedApiKey = Environment.GetEnvironmentVariable("SAPIENS_ANALYZER_SERVER_KEY");
+				string? expectedApiKey = Environment.GetEnvironmentVariable("SAPIENS_ANALYZER_SERVER_KEY");
 
 				if (apiKey != expectedApiKey)
 				{

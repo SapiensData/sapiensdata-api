@@ -22,7 +22,7 @@ namespace SapiensDataAPI.Controllers
 		[HttpGet("{id}")]
 		public async Task<ActionResult<EncryptionTest>> GetEncryptionTest(int id)
 		{
-			var encryptionTest = await _context.EncryptionTests.FindAsync(id);
+			EncryptionTest? encryptionTest = await _context.EncryptionTests.FindAsync(id);
 
 			if (encryptionTest == null)
 			{
@@ -78,7 +78,7 @@ namespace SapiensDataAPI.Controllers
 		[HttpDelete("{id}")]
 		public async Task<IActionResult> DeleteEncryptionTest(int id)
 		{
-			var encryptionTest = await _context.EncryptionTests.FindAsync(id);
+			EncryptionTest? encryptionTest = await _context.EncryptionTests.FindAsync(id);
 			if (encryptionTest == null)
 			{
 				return NotFound();

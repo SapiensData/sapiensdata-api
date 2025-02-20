@@ -32,13 +32,13 @@ namespace SapiensDataAPI.Controllers
 		[HttpGet("get-all-users")]
 		public async Task<IActionResult> GetUsers()
 		{
-			var users = await _userManager.Users.ToListAsync(); // Retrieve all users
-			var usersWithRoles = new List<object>(); // Create a list to hold users with roles
+			List<ApplicationUserModel> users = await _userManager.Users.ToListAsync(); // Retrieve all users
+			List<object> usersWithRoles = []; // Create a list to hold users with roles
 
 			// Iterate through each user and retrieve their roles
-			foreach (var user in users)
+			foreach (ApplicationUserModel? user in users)
 			{
-				var roles = await _userManager.GetRolesAsync(user); // Get roles for the user
+				IList<string> roles = await _userManager.GetRolesAsync(user); // Get roles for the user
 
 				// Create an anonymous object containing the user's details and roles
 				var userWithRoles = new
@@ -85,7 +85,7 @@ namespace SapiensDataAPI.Controllers
 			}
 
 			// Find user by username
-			var user = await _userManager.FindByNameAsync(username);
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(username);
 
 			// Check if user exists
 			if (user == null)
@@ -98,7 +98,7 @@ namespace SapiensDataAPI.Controllers
 			}
 
 			// Get roles for the user
-			var roles = await _userManager.GetRolesAsync(user);
+			IList<string> roles = await _userManager.GetRolesAsync(user);
 
 			// Construct user response with roles
 			var userWithRoles = new
@@ -134,8 +134,8 @@ namespace SapiensDataAPI.Controllers
 		[Authorize]
 		public async Task<IActionResult> AdminDeleteUser([FromForm] UploadImageDto image)
 		{
-			var token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-			var decodedToken = _jwtTokenService.DecodeJwtPayloadToJson(token).RootElement;
+			string token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+			JsonElement decodedToken = _jwtTokenService.DecodeJwtPayloadToJson(token).RootElement;
 			JwtPayload? JwtPayload = JsonSerializer.Deserialize<JwtPayload>(decodedToken) ?? null;
 			if (JwtPayload == null)
 			{
@@ -146,14 +146,14 @@ namespace SapiensDataAPI.Controllers
 				return BadRequest("No image file provided.");
 
 			Env.Load(".env");
-			var googleDrivePath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_BEGINNING_PATH");
+			string? googleDrivePath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_BEGINNING_PATH");
 			if (googleDrivePath == null)
 			{
 				return StatusCode(500, "Google Drive path doesn't exist in .env file.");
 			}
 
 			//var uploadsFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "SapiensCloud", "src", "media", "UserReceiptUploads", JwtPayload.Sub);
-			var uploadsFolderPath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", JwtPayload.Sub);
+			string uploadsFolderPath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", JwtPayload.Sub);
 
 			if (!Directory.Exists(uploadsFolderPath))
 			{
@@ -167,17 +167,17 @@ namespace SapiensDataAPI.Controllers
 				}
 			}
 
-			var extension = Path.GetExtension(image.Image.FileName);
-			var newFileName = "profile-picture_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + extension;
+			string extension = Path.GetExtension(image.Image.FileName);
+			string newFileName = "profile-picture_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + extension;
 
-			var filePath = Path.Combine(uploadsFolderPath, newFileName);
+			string filePath = Path.Combine(uploadsFolderPath, newFileName);
 
-			using (var fileStream = new FileStream(filePath, FileMode.Create))
+			using (FileStream fileStream = new(filePath, FileMode.Create))
 			{
 				await image.Image.CopyToAsync(fileStream);
 			}
 
-			var user = await _userManager.FindByNameAsync(JwtPayload.Sub);
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(JwtPayload.Sub);
 			if (user == null)
 			{
 				return NotFound("User was not found.");
@@ -195,11 +195,11 @@ namespace SapiensDataAPI.Controllers
 		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> AdminDeleteUser(string username)
 		{
-			var user = await _userManager.FindByNameAsync(username); // Find the user by username
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(username); // Find the user by username
 			if (user == null)
 				return NotFound($"User with username '{username}' not found."); // Return not found if user doesn't exist
 
-			var result = await _userManager.DeleteAsync(user); // Attempt to delete the user
+			IdentityResult result = await _userManager.DeleteAsync(user); // Attempt to delete the user
 			if (result.Succeeded)
 				return Ok("User deleted successfully."); // Return success if deletion is successful
 
@@ -211,11 +211,11 @@ namespace SapiensDataAPI.Controllers
 		[HttpDelete("delete-my-account")]
 		public async Task<IActionResult> DeleteMyAccount([FromBody] string username)
 		{
-			var user = await _userManager.FindByNameAsync(username); // Find the user by username
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(username); // Find the user by username
 			if (user == null)
 				return NotFound("User not found."); // Return not found if user doesn't exist
 
-			var result = await _userManager.DeleteAsync(user); // Attempt to delete the user
+			IdentityResult result = await _userManager.DeleteAsync(user); // Attempt to delete the user
 			if (result.Succeeded)
 				return Ok("Your account has been deleted successfully."); // Return success if deletion is successful
 
@@ -227,12 +227,12 @@ namespace SapiensDataAPI.Controllers
 		[HttpDelete("public-like-admin/delete-all-users")]
 		public async Task<IActionResult> DeleteAllUsers()
 		{
-			var users = _userManager.Users.ToList(); // Get all users
+			List<ApplicationUserModel> users = [.. _userManager.Users]; // Get all users
 
 			// Iterate through each user and delete them
-			foreach (var user in users)
+			foreach (ApplicationUserModel? user in users)
 			{
-				var result = await _userManager.DeleteAsync(user); // Delete the user
+				IdentityResult result = await _userManager.DeleteAsync(user); // Delete the user
 				if (!result.Succeeded)
 					return BadRequest($"Failed to delete user {user.UserName}"); // Return error if deletion fails
 			}
@@ -245,7 +245,7 @@ namespace SapiensDataAPI.Controllers
 		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> AdminUpdateUser(string username, [FromBody] AdminUpdateUserDto model)
 		{
-			var user = await _userManager.FindByNameAsync(username); // Find the user by username
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(username); // Find the user by username
 			if (user == null)
 				return NotFound($"User with username '{username}' not found."); // Return not found if user doesn't exist
 
@@ -255,17 +255,17 @@ namespace SapiensDataAPI.Controllers
 			user.FirstName = model.FirstName;
 			user.LastName = model.LastName;
 
-			var updateResult = await _userManager.UpdateAsync(user); // Attempt to update the user
+			IdentityResult updateResult = await _userManager.UpdateAsync(user); // Attempt to update the user
 			if (!updateResult.Succeeded)
 				return BadRequest($"Error updating user: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}"); // Return any errors
 
 			// Handle password update if provided
 			if (!string.IsNullOrEmpty(model.Password))
 			{
-				var passwordRemovalResult = await _userManager.RemovePasswordAsync(user); // Remove current password
+				IdentityResult passwordRemovalResult = await _userManager.RemovePasswordAsync(user); // Remove current password
 				if (passwordRemovalResult.Succeeded)
 				{
-					var addPasswordResult = await _userManager.AddPasswordAsync(user, model.Password); // Add new password
+					IdentityResult addPasswordResult = await _userManager.AddPasswordAsync(user, model.Password); // Add new password
 					if (!addPasswordResult.Succeeded)
 						return BadRequest($"Error setting password: {string.Join(", ", addPasswordResult.Errors.Select(e => e.Description))}"); // Return any errors
 				}
@@ -278,7 +278,7 @@ namespace SapiensDataAPI.Controllers
 			// Handle role update if provided
 			if (!string.IsNullOrEmpty(model.Role))
 			{
-				var currentRoles = await _userManager.GetRolesAsync(user); // Get current roles
+				IList<string> currentRoles = await _userManager.GetRolesAsync(user); // Get current roles
 				await _userManager.RemoveFromRolesAsync(user, currentRoles); // Remove from current roles
 
 				if (await _roleManager.RoleExistsAsync(model.Role))
@@ -303,7 +303,7 @@ namespace SapiensDataAPI.Controllers
 			{
 				return BadRequest("No username");
 			}
-			var user = await _userManager.FindByNameAsync(model.Username); // Use the username from the model
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(model.Username); // Use the username from the model
 			if (user == null)
 				return NotFound("User not found."); // Return not found if user doesn't exist
 
@@ -312,18 +312,18 @@ namespace SapiensDataAPI.Controllers
 			user.FirstName = model.FirstName ?? user.FirstName;
 			user.LastName = model.LastName ?? user.LastName;
 
-			var updateResult = await _userManager.UpdateAsync(user); // Attempt to update the user
+			IdentityResult updateResult = await _userManager.UpdateAsync(user); // Attempt to update the user
 			if (!updateResult.Succeeded)
 				return BadRequest($"Error updating your profile: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}"); // Return any errors
 
 			// Handle password update if provided
 			if (!string.IsNullOrEmpty(model.Password))
 			{
-				var passwordRemovalResult = await _userManager.RemovePasswordAsync(user); // Remove current password
+				IdentityResult passwordRemovalResult = await _userManager.RemovePasswordAsync(user); // Remove current password
 				if (!passwordRemovalResult.Succeeded)
 					return BadRequest($"Error removing your password: {string.Join(", ", passwordRemovalResult.Errors.Select(e => e.Description))}"); // Return any errors
 
-				var addPasswordResult = await _userManager.AddPasswordAsync(user, model.Password); // Add new password
+				IdentityResult addPasswordResult = await _userManager.AddPasswordAsync(user, model.Password); // Add new password
 				if (!addPasswordResult.Succeeded)
 					return BadRequest($"Error setting your password: {string.Join(", ", addPasswordResult.Errors.Select(e => e.Description))}"); // Return any errors
 			}
@@ -340,24 +340,24 @@ namespace SapiensDataAPI.Controllers
 			if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.RoleName))
 				return BadRequest("Invalid input.");
 
-			var user = await _userManager.FindByNameAsync(model.Username); // Find user by username
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(model.Username); // Find user by username
 			if (user == null)
 				return NotFound("User not found."); // Return not found if user doesn't exist
 
-			var roleExists = await _roleManager.RoleExistsAsync(model.RoleName);
+			bool roleExists = await _roleManager.RoleExistsAsync(model.RoleName);
 			if (!roleExists)
 			{
 				return BadRequest($"Role does not exist.");
 			}
 
-			var userRoleExists = await _userManager.IsInRoleAsync(user, model.RoleName);
+			bool userRoleExists = await _userManager.IsInRoleAsync(user, model.RoleName);
 			if (userRoleExists)
 			{
 				return BadRequest($"User already has the role.");
 			}
 
 			// Add the new role
-			var result = await _userManager.AddToRoleAsync(user, model.RoleName);
+			IdentityResult result = await _userManager.AddToRoleAsync(user, model.RoleName);
 
 			if (!result.Succeeded)
 				return BadRequest("Failed to add role to user."); // Return error if role add fails
@@ -374,24 +374,24 @@ namespace SapiensDataAPI.Controllers
 			if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.RoleName))
 				return BadRequest("Invalid input.");
 
-			var user = await _userManager.FindByNameAsync(model.Username); // Find user by username
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(model.Username); // Find user by username
 			if (user == null)
 				return NotFound("User not found."); // Return not found if user doesn't exist
 
-			var roleExists = await _roleManager.RoleExistsAsync(model.RoleName);
+			bool roleExists = await _roleManager.RoleExistsAsync(model.RoleName);
 			if (!roleExists)
 			{
 				return BadRequest($"Role does not exist.");
 			}
 
-			var userRoleExists = await _userManager.IsInRoleAsync(user, model.RoleName);
+			bool userRoleExists = await _userManager.IsInRoleAsync(user, model.RoleName);
 			if (!userRoleExists)
 			{
 				return BadRequest($"User does not have the role.");
 			}
 
 			// Add the new role
-			var result = await _userManager.RemoveFromRoleAsync(user, model.RoleName);
+			IdentityResult result = await _userManager.RemoveFromRoleAsync(user, model.RoleName);
 
 			if (!result.Succeeded)
 				return BadRequest("Failed to remove user role."); // Return error if role remove fails

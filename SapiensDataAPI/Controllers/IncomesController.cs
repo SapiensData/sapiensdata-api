@@ -25,7 +25,7 @@ namespace SapiensDataAPI.Controllers
 		[HttpGet("{id}")]
 		public async Task<ActionResult<Income>> GetIncome(int id)
 		{
-			var income = await _context.Incomes.FindAsync(id);
+			Income? income = await _context.Incomes.FindAsync(id);
 
 			if (income == null)
 			{
@@ -71,7 +71,7 @@ namespace SapiensDataAPI.Controllers
 		[HttpPost]
 		public async Task<ActionResult<Income>> PostIncome(IncomeDto incomeDto)
 		{
-			var income = _mapper.Map<Income>(incomeDto);
+			Income income = _mapper.Map<Income>(incomeDto);
 			_context.Incomes.Add(income);
 			await _context.SaveChangesAsync();
 
@@ -82,7 +82,7 @@ namespace SapiensDataAPI.Controllers
 		[HttpDelete("{id}")]
 		public async Task<IActionResult> DeleteIncome(int id)
 		{
-			var income = await _context.Incomes.FindAsync(id);
+			Income? income = await _context.Incomes.FindAsync(id);
 			if (income == null)
 			{
 				return NotFound();

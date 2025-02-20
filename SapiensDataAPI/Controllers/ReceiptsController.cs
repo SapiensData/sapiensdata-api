@@ -42,14 +42,14 @@ namespace SapiensDataAPI.Controllers
 		{
 			Env.Load(".env");
 
-			var googleDrivePath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_BEGINNING_PATH");
+			string? googleDrivePath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_BEGINNING_PATH");
 			if (googleDrivePath == null)
 			{
 				return StatusCode(500, "Google Drive path doesn't exist in .env file.");
 			}
 
 			//var uploadsFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "SapiensCloud", "src", "media", "UserReceiptUploads", JwtPayload.Sub);
-			var filePath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", username, "receipts", receiptVailidation.FileMetadata.ReceiptFilename);
+			string filePath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", username, "receipts", receiptVailidation.FileMetadata.ReceiptFilename);
 			if (!await Task.Run(() => System.IO.File.Exists(filePath)))
 			{
 				return BadRequest("File doesn't exist");
@@ -61,10 +61,10 @@ namespace SapiensDataAPI.Controllers
 				return BadRequest("Directory is not ok");
 			}
 
-			var correctedStoreName = receiptVailidation.Store.Name.Replace(' ', '-');
+			string correctedStoreName = receiptVailidation.Store.Name.Replace(' ', '-');
 
-			var extension = Path.GetExtension(filePath);
-			var newFileName = correctedStoreName + "_" + receiptVailidation.Receipt.BuyDatetime.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + extension;
+			string extension = Path.GetExtension(filePath);
+			string newFileName = correctedStoreName + "_" + receiptVailidation.Receipt.BuyDatetime.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + extension;
 
 			// Create the new path by combining the directory and new file name
 			string newPath = Path.Combine(directory, newFileName);
@@ -77,17 +77,17 @@ namespace SapiensDataAPI.Controllers
 			// Rename the file by moving it to the new path
 			await Task.Run(() => System.IO.File.Move(filePath, newPath));
 
-			var pathSegments = filePath.Split(Path.DirectorySeparatorChar);
-			var lastThreeSegments = string.Join(Path.DirectorySeparatorChar.ToString(), pathSegments.TakeLast(3));
+			string[] pathSegments = filePath.Split(Path.DirectorySeparatorChar);
+			string lastThreeSegments = string.Join(Path.DirectorySeparatorChar.ToString(), pathSegments.TakeLast(3));
 
-			var user = await _userManager.FindByNameAsync(username);
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(username);
 			if (user == null)
 			{
 				// Handle the case where the user is not found
 				return NotFound("User not found");
 			}
 
-			var receipts = await _context.Receipts
+			List<Receipt> receipts = await _context.Receipts
 				.Where(r => r.ReceiptImagePath != null && r.ReceiptImagePath.EndsWith(lastThreeSegments) && r.UserId == user.Id)
 				.ToListAsync();
 
@@ -110,7 +110,7 @@ namespace SapiensDataAPI.Controllers
 			receipts[0].ReceiptImagePath = newPath;
 
 			List<Product> products = new(receiptVailidation.Product.Count);
-			foreach (var product in receiptVailidation.Product)
+			foreach (ProductV product in receiptVailidation.Product)
 			{
 				products.Add(_mapper.Map<Product>(product));
 			}
@@ -120,7 +120,7 @@ namespace SapiensDataAPI.Controllers
 			List<int> productIds = [.. products.Select(p => p.ProductId)];
 
 			List<ReceiptProduct> receiptProducts = new(receiptVailidation.Product.Count);
-			foreach (var item in productIds)
+			foreach (int item in productIds)
 			{
 				receiptProducts.Add(new ReceiptProduct
 				{
@@ -131,25 +131,25 @@ namespace SapiensDataAPI.Controllers
 
 			await _context.ReceiptProducts.AddRangeAsync(receiptProducts);
 
-			var taxRate = _mapper.Map<TaxRate>(receiptVailidation.TaxRate);
+			TaxRate taxRate = _mapper.Map<TaxRate>(receiptVailidation.TaxRate);
 			taxRate.ReceiptId = receipts[0].ReceiptId;
 			await _context.AddAsync(taxRate);
 
-			var receiptTaxDetails = _mapper.Map<ReceiptTaxDetail>(receiptVailidation.ReceiptTaxDetail);
+			ReceiptTaxDetail receiptTaxDetails = _mapper.Map<ReceiptTaxDetail>(receiptVailidation.ReceiptTaxDetail);
 			receiptTaxDetails.ReceiptId = receipts[0].ReceiptId;
 			receiptTaxDetails.TaxRateId = taxRate.TaxRateId;
 			await _context.AddAsync(receiptTaxDetails);
 
-			var address = _mapper.Map<Address>(receiptVailidation.Store);
+			Address address = _mapper.Map<Address>(receiptVailidation.Store);
 			await _context.AddAsync(address);
 
-			var store = _mapper.Map<Store>(receiptVailidation.Store);
+			Store store = _mapper.Map<Store>(receiptVailidation.Store);
 			await _context.AddAsync(store);
 
 			receipts[0].StoreId = store.StoreId;
 			_context.Update(receipts[0]);
 
-			var storeAddress = new StoreAddress
+			StoreAddress storeAddress = new()
 			{
 				StoreId = store.StoreId,
 				AddressId = address.AddressId,
@@ -233,22 +233,22 @@ namespace SapiensDataAPI.Controllers
 		[Authorize]
 		public async Task<ActionResult<ResReceiptDto>> GetReceipt(int offset = 0)
 		{
-			var token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-			var decodedToken = _jwtTokenService.DecodeJwtPayloadToJson(token).RootElement;
+			string token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+			JsonElement decodedToken = _jwtTokenService.DecodeJwtPayloadToJson(token).RootElement;
 			JwtPayload? JwtPayload = JsonSerializer.Deserialize<JwtPayload>(decodedToken) ?? null;
 			if (JwtPayload == null)
 			{
 				return BadRequest("JwtPayload is not ok.");
 			}
 
-			var user = await _userManager.FindByNameAsync(JwtPayload.Sub);
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(JwtPayload.Sub);
 			if (user == null)
 			{
 				// Handle the case where the user is not found
 				return NotFound("User not found");
 			}
 
-			var receipt = await _context.Receipts
+			Receipt? receipt = await _context.Receipts
 				.Where(r => r.UserId == user.Id)
 				.OrderByDescending(r => r.UploadDate)
 				.Skip(offset)
@@ -266,7 +266,7 @@ namespace SapiensDataAPI.Controllers
 				return NotFound();
 			}
 
-			var storeAddress = await _context.StoreAddresses
+			StoreAddress? storeAddress = await _context.StoreAddresses
 				.Where(sa => sa.StoreId == receipt.StoreId)
 				.FirstOrDefaultAsync();
 			if (storeAddress == null)
@@ -274,7 +274,7 @@ namespace SapiensDataAPI.Controllers
 				return BadRequest("No storeaddress found");
 			}
 
-			var address = await _context.Addresses
+			Address? address = await _context.Addresses
 				.Where(a => a.AddressId == storeAddress.AddressId)
 				.FirstOrDefaultAsync();
 			if (address == null)
@@ -282,11 +282,11 @@ namespace SapiensDataAPI.Controllers
 				return BadRequest("No address found");
 			}
 
-			var store = _mapper.Map<StoreV>(receipt.Store);
+			StoreV store = _mapper.Map<StoreV>(receipt.Store);
 			store = _mapper.Map(address, store);
 
 			// Determine the MIME type based on the file extension
-			var provider = new FileExtensionContentTypeProvider();
+			FileExtensionContentTypeProvider provider = new();
 			if (!provider.TryGetContentType(receipt.ReceiptImagePath, out string? contentType))
 			{
 				return BadRequest("Content type of the image can not be determined");
@@ -295,45 +295,45 @@ namespace SapiensDataAPI.Controllers
 			byte[] imageBytes = System.IO.File.ReadAllBytes(receipt.ReceiptImagePath);
 			string base64Image = Convert.ToBase64String(imageBytes);
 
-			var productsReceipts = await _context.ReceiptProducts
+			List<ReceiptProduct> productsReceipts = await _context.ReceiptProducts
 				.Where(rp => rp.ReceiptId == receipt.ReceiptId)
 				.ToListAsync();
-			var productsReceiptsProductsIds = productsReceipts.Select(p => p.ProductId).ToList();
+			List<int> productsReceiptsProductsIds = productsReceipts.Select(p => p.ProductId).ToList();
 
-			var products = await _context.Products
+			List<Product> products = await _context.Products
 				.Where(p => productsReceiptsProductsIds.Contains(p.ProductId))
 				.ToListAsync();
 
 			List<ProductV> productVs = new(products.Count);
 
-			foreach (var product in products)
+			foreach (Product? product in products)
 			{
 				productVs.Add(_mapper.Map<ProductV>(product));
 			}
 
-			var taxRates = await _context.TaxRates
+			List<TaxRate> taxRates = await _context.TaxRates
 				.Where(tr => tr.ReceiptId == receipt.ReceiptId)
 				.ToListAsync();
 
 			List<TaxRateV> taxRatesVs = new(taxRates.Count);
 
-			foreach (var taxRate in taxRates)
+			foreach (TaxRate? taxRate in taxRates)
 			{
 				taxRatesVs.Add(_mapper.Map<TaxRateV>(taxRate));
 			}
 
-			var receiptTaxDetails = await _context.ReceiptTaxDetails
+			List<ReceiptTaxDetail> receiptTaxDetails = await _context.ReceiptTaxDetails
 				.Where(trd => trd.ReceiptId == receipt.ReceiptId)
 				.ToListAsync();
 
 			List<ReceiptTaxDetailV> receiptTaxDetailVs = new(receiptTaxDetails.Count);
 
-			foreach (var receiptTaxDetail in receiptTaxDetails)
+			foreach (ReceiptTaxDetail? receiptTaxDetail in receiptTaxDetails)
 			{
 				receiptTaxDetailVs.Add(_mapper.Map<ReceiptTaxDetailV>(receiptTaxDetail));
 			}
 
-			var ret = new ResReceiptDto
+			ResReceiptDto ret = new()
 			{
 				FileName = Path.GetFileName(receipt.ReceiptImagePath),
 				ContentType = contentType,
@@ -387,8 +387,8 @@ namespace SapiensDataAPI.Controllers
 		[Authorize]
 		public async Task<IActionResult> PostReceipt([FromForm] UploadImageDto image)
 		{
-			var token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-			var decodedToken = _jwtTokenService.DecodeJwtPayloadToJson(token).RootElement;
+			string token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+			JsonElement decodedToken = _jwtTokenService.DecodeJwtPayloadToJson(token).RootElement;
 			JwtPayload? JwtPayload = JsonSerializer.Deserialize<JwtPayload>(decodedToken) ?? null;
 			if (JwtPayload == null)
 			{
@@ -522,7 +522,7 @@ namespace SapiensDataAPI.Controllers
 		[Authorize(Policy = "Admin")]
 		public async Task<IActionResult> DeleteReceipt(int id)
 		{
-			var receipt = await _context.Receipts.FindAsync(id);
+			Receipt? receipt = await _context.Receipts.FindAsync(id);
 			if (receipt == null)
 			{
 				return NotFound();

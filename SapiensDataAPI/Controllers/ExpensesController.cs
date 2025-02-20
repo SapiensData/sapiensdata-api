@@ -25,7 +25,7 @@ namespace SapiensDataAPI.Controllers
 		[HttpGet("{id}")]
 		public async Task<ActionResult<Expense>> GetExpense(int id)
 		{
-			var expense = await _context.Expenses.FindAsync(id);
+			Expense? expense = await _context.Expenses.FindAsync(id);
 
 			if (expense == null)
 			{
@@ -71,7 +71,7 @@ namespace SapiensDataAPI.Controllers
 		[HttpPost]
 		public async Task<ActionResult<Expense>> PostExpense(ExpenseDto expenseDto)
 		{
-			var expense = _mapper.Map<Expense>(expenseDto);
+			Expense expense = _mapper.Map<Expense>(expenseDto);
 			_context.Expenses.Add(expense);
 			await _context.SaveChangesAsync();
 
@@ -82,7 +82,7 @@ namespace SapiensDataAPI.Controllers
 		[HttpDelete("{id}")]
 		public async Task<IActionResult> DeleteExpense(int id)
 		{
-			var expense = await _context.Expenses.FindAsync(id);
+			Expense? expense = await _context.Expenses.FindAsync(id);
 			if (expense == null)
 			{
 				return NotFound();

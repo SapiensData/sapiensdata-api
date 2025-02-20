@@ -14,7 +14,7 @@ using SapiensDataAPI.Services.GlobalVariable;
 using SapiensDataAPI.Services.JwtToken; // Import services, including JwtTokenService
 using System.Text; // Import for encoding JWT secret key
 
-var builder = WebApplication.CreateBuilder(args); // Create a builder for the web application
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args); // Create a builder for the web application
 builder.Configuration.AddEnvironmentVariables(); // Add environment variables to the configuration
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());  // Registers all profiles in the project
@@ -212,7 +212,7 @@ foreach (string role in roles)
 // Add Scoped services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>(); // Add JwtTokenService to the service collection with Scoped lifetime
 
-var app = builder.Build(); // Build the application
+WebApplication app = builder.Build(); // Build the application
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment()) // Check if the application is in development environment
@@ -222,10 +222,10 @@ if (app.Environment.IsDevelopment()) // Check if the application is in developme
 }
 
 // Create roles on startup
-using (var scope = app.Services.CreateScope()) // Create a scope for dependency injection
+using (IServiceScope scope = app.Services.CreateScope()) // Create a scope for dependency injection
 {
-	var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(); // Get the RoleManager service
-																							 //var roles = new[] { "Admin", "NormalUser", "SuperAdmin", "Moderator", "TeamLead", "Developer", "Tester", "Guest", "DataScientist" }; // Define a list of roles
+	RoleManager<IdentityRole> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(); // Get the RoleManager service
+																												   //var roles = new[] { "Admin", "NormalUser", "SuperAdmin", "Moderator", "TeamLead", "Developer", "Tester", "Guest", "DataScientist" }; // Define a list of roles
 	foreach (string role in roles)
 	{
 		if (!await roleManager.RoleExistsAsync(role)) // Check if the role exists
