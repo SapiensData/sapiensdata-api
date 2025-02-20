@@ -18,16 +18,16 @@ namespace SapiensDataAPI.Provider.EncryptionProvider
 
 		private Aes CreateCryptographyProvider(CipherMode mode, PaddingMode padding)
 		{
-			var encryptionKey = _globalVariableService.SymmetricKey;
+			string encryptionKey = _globalVariableService.SymmetricKey;
 
-			var encryptionKeyBytes = Encoding.UTF8.GetBytes(encryptionKey);
+			byte[] encryptionKeyBytes = Encoding.UTF8.GetBytes(encryptionKey);
 
 			if (encryptionKeyBytes.Length != 32)
 			{
 				throw new ArgumentException("Encryption key must be 32 bytes long.");
 			}
 
-			var aes = Aes.Create();
+			Aes aes = Aes.Create();
 
 			aes.Mode = mode;
 			aes.KeySize = encryptionKeyBytes.Length * 8;

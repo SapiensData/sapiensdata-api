@@ -1198,7 +1198,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__UserSessi__user___68487DD7");
 		});
 
-		var byteArrayComparer = new ValueComparer<byte[]>(
+		ValueComparer<byte[]> byteArrayComparer = new(
 			(a, b) => a != null && b != null && a.SequenceEqual(b),
 			a => a != null ? a.Aggregate(0, (acc, v) => HashCode.Combine(acc, v)) : 0,
 			a => a != null ? a.ToArray() : Array.Empty<byte>()
