@@ -23,67 +23,67 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 		_provider = new EncryptionProvider(globalVariableService);
 	}
 
-	public virtual DbSet<Address> Addresses { get; set; }
+	public virtual DbSet<Address> Addresses { get; set; } = null!;
 
-	public virtual DbSet<Bank> Banks { get; set; }
+	public virtual DbSet<Bank> Banks { get; set; } = null!;
 
-	public virtual DbSet<BankAccount> BankAccounts { get; set; }
+	public virtual DbSet<BankAccount> BankAccounts { get; set; } = null!;
 
-	public virtual DbSet<BankTransaction> BankTransactions { get; set; }
+	public virtual DbSet<BankTransaction> BankTransactions { get; set; } = null!;
 
-	public virtual DbSet<Category> Categories { get; set; }
+	public virtual DbSet<Category> Categories { get; set; } = null!;
 
-	public virtual DbSet<Company> Companies { get; set; }
+	public virtual DbSet<Company> Companies { get; set; } = null!;
 
-	public virtual DbSet<CompanyAddress> CompanyAddresses { get; set; }
+	public virtual DbSet<CompanyAddress> CompanyAddresses { get; set; } = null!;
 
-	public virtual DbSet<Debt> Debts { get; set; }
+	public virtual DbSet<Debt> Debts { get; set; } = null!;
 
-	public virtual DbSet<Expense> Expenses { get; set; }
+	public virtual DbSet<Expense> Expenses { get; set; } = null!;
 
-	public virtual DbSet<ExpenseCategory> ExpenseCategories { get; set; }
+	public virtual DbSet<ExpenseCategory> ExpenseCategories { get; set; } = null!;
 
-	public virtual DbSet<Frequency> Frequencies { get; set; }
+	public virtual DbSet<Frequency> Frequencies { get; set; } = null!;
 
-	public virtual DbSet<Income> Incomes { get; set; }
+	public virtual DbSet<Income> Incomes { get; set; } = null!;
 
-	public virtual DbSet<IncomeCategory> IncomeCategories { get; set; }
+	public virtual DbSet<IncomeCategory> IncomeCategories { get; set; } = null!;
 
-	public virtual DbSet<Investment> Investments { get; set; }
+	public virtual DbSet<Investment> Investments { get; set; } = null!;
 
-	public virtual DbSet<Label> Labels { get; set; }
+	public virtual DbSet<Label> Labels { get; set; } = null!;
 
-	public virtual DbSet<LabelAssignment> LabelAssignments { get; set; }
+	public virtual DbSet<LabelAssignment> LabelAssignments { get; set; } = null!;
 
-	public virtual DbSet<PaymentMethod> PaymentMethods { get; set; }
+	public virtual DbSet<PaymentMethod> PaymentMethods { get; set; } = null!;
 
-	public virtual DbSet<Product> Products { get; set; }
+	public virtual DbSet<Product> Products { get; set; } = null!;
 
-	public virtual DbSet<Receipt> Receipts { get; set; }
+	public virtual DbSet<Receipt> Receipts { get; set; } = null!;
 
-	public virtual DbSet<ReceiptPayment> ReceiptPayments { get; set; }
+	public virtual DbSet<ReceiptPayment> ReceiptPayments { get; set; } = null!;
 
-	public virtual DbSet<ReceiptTaxDetail> ReceiptTaxDetails { get; set; }
+	public virtual DbSet<ReceiptTaxDetail> ReceiptTaxDetails { get; set; } = null!;
 
-	public virtual DbSet<Saving> Savings { get; set; }
+	public virtual DbSet<Saving> Savings { get; set; } = null!;
 
-	public virtual DbSet<Store> Stores { get; set; }
+	public virtual DbSet<Store> Stores { get; set; } = null!;
 
-	public virtual DbSet<StoreAddress> StoreAddresses { get; set; }
+	public virtual DbSet<StoreAddress> StoreAddresses { get; set; } = null!;
 
-	public virtual DbSet<TaxRate> TaxRates { get; set; }
+	public virtual DbSet<TaxRate> TaxRates { get; set; } = null!;
 
-	public virtual DbSet<UnitType> UnitTypes { get; set; }
+	public virtual DbSet<UnitType> UnitTypes { get; set; } = null!;
 
-	public virtual DbSet<UserAddress> UserAddresses { get; set; }
+	public virtual DbSet<UserAddress> UserAddresses { get; set; } = null!;
 
-	public virtual DbSet<UserRelationship> UserRelationships { get; set; }
+	public virtual DbSet<UserRelationship> UserRelationships { get; set; } = null!;
 
-	public virtual DbSet<UserSession> UserSessions { get; set; }
+	public virtual DbSet<UserSession> UserSessions { get; set; } = null!;
 
-	public virtual DbSet<ReceiptProduct> ReceiptProducts { get; set; }
+	public virtual DbSet<ReceiptProduct> ReceiptProducts { get; set; } = null!;
 
-	public virtual DbSet<EncryptionTest> EncryptionTests { get; set; }
+	public virtual DbSet<EncryptionTest> EncryptionTests { get; set; } = null!;
 
 	protected override void OnModelCreating(ModelBuilder builder)
 	{
