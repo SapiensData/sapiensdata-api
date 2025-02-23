@@ -10,11 +10,13 @@ Welcome to **SapiensData API**! This RESTful API is designed to support the **Sa
 - **Swagger UI** for interactive API documentation and testing.
 - **Clean and Modular Architecture** optimized for ease of development and scalability.
 
-## 🛠️ Getting Started
+<details>
+  <summary><h2>🛠️ Getting Started</h2></summary>
 
 Follow these steps to set up and run the project on your local machine for development and testing.
 
-### Prerequisites
+<details>
+  <summary><h3>Prerequisites</h3></summary>
 
 Please ensure you have the following installed:
 
@@ -26,7 +28,10 @@ Please ensure you have the following installed:
   - Sapiens API key to connect to and authorize the SapiensDataAPI subproject (identical to your `SAPIENS_API_KEY` variable from `Analytics/.env.dev`)
   - A Google Drive folder path
 
-### 🔧 Setup Instructions
+</details>
+
+<details>
+  <summary><h3>🔧 Setup Instructions</h3></summary>
 
 1. **Open the Project in Visual Studio**:
    - Navigate to the `SapiensDataAPI` folder and open `SapiensData.API.sln`.
@@ -60,7 +65,13 @@ cp .env.example .env
 2. **Run the Application**:
    - Press `F5` or click the **Run** button in Visual Studio. The API will run on `https://localhost:5001` (or a different port if configured).
 
-### 🧪 Testing
+</details>
+
+<details>
+  <summary><h3>🧪 Testing</h3></summary>
 
 - **Swagger UI** provides an interactive interface to test each API endpoint.
 - Use tools like [Postman](https://www.postman.com/) or [curl](https://curl.se/) for additional testing.
+
+</details>
+</details>
