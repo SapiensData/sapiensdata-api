@@ -17,7 +17,7 @@ namespace SapiensDataAPI.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -824,6 +824,27 @@ namespace SapiensDataAPI.Migrations
                     b.ToTable("Debt", (string)null);
                 });
 
+            modelBuilder.Entity("SapiensDataAPI.Models.EncryptionTest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("StreetEncrypted")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EncryptionTests", (string)null);
+                });
+
             modelBuilder.Entity("SapiensDataAPI.Models.Expense", b =>
                 {
                     b.Property<int>("ExpenseId")
@@ -1245,7 +1266,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("LoanedToUserId");
 
-                    b.ToTable("Investments");
+                    b.ToTable("Investments", (string)null);
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.Label", b =>
@@ -1606,6 +1627,7 @@ namespace SapiensDataAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReceiptProductId"));
 
                     b.Property<decimal>("Discount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
@@ -1620,7 +1642,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("ReceiptId");
 
-                    b.ToTable("ReceiptProducts");
+                    b.ToTable("ReceiptProducts", (string)null);
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.ReceiptTaxDetail", b =>
@@ -1750,7 +1772,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Savings");
+                    b.ToTable("Savings", (string)null);
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.Store", b =>

@@ -13,7 +13,7 @@ namespace SapiensDataAPI.Migrations
 {
     [DbContext(typeof(SapeinsDataDbContext))]
     [Migration("20241114070357_Add intermediate table Receipt_Product to DB")]
-    partial class AddintermediatetableReceipt_ProducttoDB
+    partial class AddIntermediateTableReceiptProductToDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

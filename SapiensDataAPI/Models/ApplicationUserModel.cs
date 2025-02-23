@@ -33,18 +33,18 @@ namespace SapiensDataAPI.Models
 		public DateTime? UpdatedAt { get; set; }
 		public DateTime? LastLogin { get; set; }
 		public string? Status { get; set; }
-		public virtual ICollection<BankAccount> BankAccounts { get; set; } = new List<BankAccount>();
-		public virtual ICollection<Debt> Debts { get; set; } = new List<Debt>();
-		public virtual ICollection<Expense> ExpenseSourceUsers { get; set; } = new List<Expense>();
-		public virtual ICollection<Expense> ExpenseUsers { get; set; } = new List<Expense>();
-		public virtual ICollection<Income> IncomeSourceUsers { get; set; } = new List<Income>();
-		public virtual ICollection<Income> IncomeUsers { get; set; } = new List<Income>();
-		public virtual ICollection<Investment> Investments { get; set; } = new List<Investment>();
-		public virtual ICollection<Saving> Savings { get; set; } = new List<Saving>();
-		public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
-		public virtual ICollection<UserRelationship> UserRelationshipRelatedUsers { get; set; } = new List<UserRelationship>();
-		public virtual ICollection<UserRelationship> UserRelationshipUsers { get; set; } = new List<UserRelationship>();
-		public virtual ICollection<UserSession> UserSessions { get; set; } = new List<UserSession>();
-		public virtual ICollection<Receipt> Receipts { get; set; } = new List<Receipt>();
+		public virtual ICollection<BankAccount> BankAccounts { get; set; } = [];
+		public virtual ICollection<Debt> Debts { get; set; } = [];
+		public virtual ICollection<Expense> ExpenseSourceUsers { get; set; } = [];
+		public virtual ICollection<Expense> ExpenseUsers { get; set; } = [];
+		public virtual ICollection<Income> IncomeSourceUsers { get; set; } = [];
+		public virtual ICollection<Income> IncomeUsers { get; set; } = [];
+		public virtual ICollection<Investment> Investments { get; set; } = [];
+		public virtual ICollection<Saving> Savings { get; set; } = [];
+		public virtual ICollection<UserAddress> UserAddresses { get; set; } = [];
+		public virtual ICollection<UserRelationship> UserRelationshipRelatedUsers { get; set; } = [];
+		public virtual ICollection<UserRelationship> UserRelationshipUsers { get; set; } = [];
+		public virtual ICollection<UserSession> UserSessions { get; set; } = [];
+		public virtual ICollection<Receipt> Receipts { get; set; } = [];
 	}
 }

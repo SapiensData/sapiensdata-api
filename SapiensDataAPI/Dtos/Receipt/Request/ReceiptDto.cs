@@ -1,6 +1,4 @@
-﻿using SapiensDataAPI.Models;
-
-namespace SapiensDataAPI.Dtos.Receipt.Request
+﻿namespace SapiensDataAPI.Dtos.Receipt.Request
 {
 	public class ReceiptDto
 	{

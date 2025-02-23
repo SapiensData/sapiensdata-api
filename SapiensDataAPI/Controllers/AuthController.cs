@@ -20,15 +20,15 @@ namespace SapiensDataAPI.Controllers // Define the namespace for the AuthControl
 			if (!ModelState.IsValid) // Check if the model state is valid
 				return BadRequest("Invalid registration details."); // Return bad request if validation fails
 
-			var userExists = await _userManager.FindByNameAsync(model.Username); // Check if the username already exists
+			ApplicationUserModel? userExists = await _userManager.FindByNameAsync(model.Username); // Check if the username already exists
 			if (userExists != null) // If user exists
 				return Conflict("Username already exists."); // Return conflict response if username exists
 
-			var emailExists = await _userManager.FindByEmailAsync(model.Email); // Check if the email is already in use
+			ApplicationUserModel? emailExists = await _userManager.FindByEmailAsync(model.Email); // Check if the email is already in use
 			if (emailExists != null) // If email exists
 				return Conflict("Email is already in use."); // Return conflict response if email exists
 
-			var user = new ApplicationUserModel // Create a new ApplicationUserModel instance
+			ApplicationUserModel user = new()
 			{
 				UserName = model.Username, // Set the username
 				Email = model.Email, // Set the email
@@ -37,13 +37,13 @@ namespace SapiensDataAPI.Controllers // Define the namespace for the AuthControl
 			};
 
 			Env.Load(".env");
-			var googleDrivePath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_BEGINNING_PATH");
+			string? googleDrivePath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_BEGINNING_PATH");
 			if (googleDrivePath == null)
 			{
 				return StatusCode(500, "Google Drive path doesn't exist in .env file.");
 			}
 
-			var userFolderPath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", user.UserName);
+			string userFolderPath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", user.UserName);
 
 			if (!Directory.Exists(userFolderPath))
 			{
@@ -58,13 +58,13 @@ namespace SapiensDataAPI.Controllers // Define the namespace for the AuthControl
 			}
 
 			// Create the user and hash the password
-			var result = await _userManager.CreateAsync(user, model.Password); // Create the user with the provided password
+			IdentityResult result = await _userManager.CreateAsync(user, model.Password); // Create the user with the provided password
 
 			if (!result.Succeeded) // If user creation fails
 				return BadRequest(result.Errors); // Return bad request with the errors
 
 			// Assign 'NormalUser' role by default
-			var roleResult = await _userManager.AddToRoleAsync(user, "NormalUser"); // Add the user to the 'NormalUser' role
+			IdentityResult roleResult = await _userManager.AddToRoleAsync(user, "NormalUser"); // Add the user to the 'NormalUser' role
 			if (!roleResult.Succeeded) // If role assignment fails
 				return BadRequest("Failed to assign role."); // Return bad request
 
@@ -77,7 +77,7 @@ namespace SapiensDataAPI.Controllers // Define the namespace for the AuthControl
 			if (!ModelState.IsValid) // Check if the model state is valid
 				return BadRequest("Invalid login details. Please provide a valid username and password."); // Return bad request if validation fails
 
-			var user = await _userManager.FindByNameAsync(model.Username); // Find the user by their username
+			ApplicationUserModel? user = await _userManager.FindByNameAsync(model.Username); // Find the user by their username
 			if (user == null) // If user does not exist
 				return Unauthorized("Username does not exist."); // Return unauthorized response if username is not found
 
@@ -85,7 +85,7 @@ namespace SapiensDataAPI.Controllers // Define the namespace for the AuthControl
 				return Unauthorized("Incorrect password."); // Return unauthorized response if password is incorrect
 
 			// Generate token using the JWT token service
-			var token = await _jwtTokenService.GenerateToken(user); // Await the task for token generation
+			string token = await _jwtTokenService.GenerateToken(user); // Await the task for token generation
 
 			if (string.IsNullOrEmpty(token)) // If token generation fails
 				return StatusCode(500, "An error occurred while generating the token."); // Return internal server error

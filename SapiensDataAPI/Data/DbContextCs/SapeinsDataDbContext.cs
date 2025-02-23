@@ -1,87 +1,97 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SapiensDataAPI.Models;
+using SapiensDataAPI.Provider.EncryptionProvider;
+using SapiensDataAPI.Services.GlobalVariable;
+using SoftFluent.EntityFrameworkCore.DataEncryption;
 
 namespace SapiensDataAPI.Data.DbContextCs;
 
 public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserModel>
 {
-	public SapeinsDataDbContext()
+	private readonly IEncryptionProvider _provider;
+
+	public SapeinsDataDbContext(GlobalVariableService globalVariableService)
 	{
+		_provider = new EncryptionProvider(globalVariableService);
 	}
 
-	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options)
+	public SapeinsDataDbContext(DbContextOptions<SapeinsDataDbContext> options, GlobalVariableService globalVariableService)
 		: base(options)
 	{
+		_provider = new EncryptionProvider(globalVariableService);
 	}
 
-	public virtual DbSet<Address> Addresses { get; set; }
+	public virtual DbSet<Address> Addresses { get; set; } = null!;
 
-	public virtual DbSet<Bank> Banks { get; set; }
+	public virtual DbSet<Bank> Banks { get; set; } = null!;
 
-	public virtual DbSet<BankAccount> BankAccounts { get; set; }
+	public virtual DbSet<BankAccount> BankAccounts { get; set; } = null!;
 
-	public virtual DbSet<BankTransaction> BankTransactions { get; set; }
+	public virtual DbSet<BankTransaction> BankTransactions { get; set; } = null!;
 
-	public virtual DbSet<Category> Categories { get; set; }
+	public virtual DbSet<Category> Categories { get; set; } = null!;
 
-	public virtual DbSet<Company> Companies { get; set; }
+	public virtual DbSet<Company> Companies { get; set; } = null!;
 
-	public virtual DbSet<CompanyAddress> CompanyAddresses { get; set; }
+	public virtual DbSet<CompanyAddress> CompanyAddresses { get; set; } = null!;
 
-	public virtual DbSet<Debt> Debts { get; set; }
+	public virtual DbSet<Debt> Debts { get; set; } = null!;
 
-	public virtual DbSet<Expense> Expenses { get; set; }
+	public virtual DbSet<Expense> Expenses { get; set; } = null!;
 
-	public virtual DbSet<ExpenseCategory> ExpenseCategories { get; set; }
+	public virtual DbSet<ExpenseCategory> ExpenseCategories { get; set; } = null!;
 
-	public virtual DbSet<Frequency> Frequencies { get; set; }
+	public virtual DbSet<Frequency> Frequencies { get; set; } = null!;
 
-	public virtual DbSet<Income> Incomes { get; set; }
+	public virtual DbSet<Income> Incomes { get; set; } = null!;
 
-	public virtual DbSet<IncomeCategory> IncomeCategories { get; set; }
+	public virtual DbSet<IncomeCategory> IncomeCategories { get; set; } = null!;
 
-	public virtual DbSet<Investment> Investments { get; set; }
+	public virtual DbSet<Investment> Investments { get; set; } = null!;
 
-	public virtual DbSet<Label> Labels { get; set; }
+	public virtual DbSet<Label> Labels { get; set; } = null!;
 
-	public virtual DbSet<LabelAssignment> LabelAssignments { get; set; }
+	public virtual DbSet<LabelAssignment> LabelAssignments { get; set; } = null!;
 
-	public virtual DbSet<PaymentMethod> PaymentMethods { get; set; }
+	public virtual DbSet<PaymentMethod> PaymentMethods { get; set; } = null!;
 
-	public virtual DbSet<Product> Products { get; set; }
+	public virtual DbSet<Product> Products { get; set; } = null!;
 
-	public virtual DbSet<Receipt> Receipts { get; set; }
+	public virtual DbSet<Receipt> Receipts { get; set; } = null!;
 
-	public virtual DbSet<ReceiptPayment> ReceiptPayments { get; set; }
+	public virtual DbSet<ReceiptPayment> ReceiptPayments { get; set; } = null!;
 
-	public virtual DbSet<ReceiptTaxDetail> ReceiptTaxDetails { get; set; }
+	public virtual DbSet<ReceiptTaxDetail> ReceiptTaxDetails { get; set; } = null!;
 
-	public virtual DbSet<Saving> Savings { get; set; }
+	public virtual DbSet<Saving> Savings { get; set; } = null!;
 
-	public virtual DbSet<Store> Stores { get; set; }
+	public virtual DbSet<Store> Stores { get; set; } = null!;
 
-	public virtual DbSet<StoreAddress> StoreAddresses { get; set; }
+	public virtual DbSet<StoreAddress> StoreAddresses { get; set; } = null!;
 
-	public virtual DbSet<TaxRate> TaxRates { get; set; }
+	public virtual DbSet<TaxRate> TaxRates { get; set; } = null!;
 
-	public virtual DbSet<UnitType> UnitTypes { get; set; }
+	public virtual DbSet<UnitType> UnitTypes { get; set; } = null!;
 
-	public virtual DbSet<UserAddress> UserAddresses { get; set; }
+	public virtual DbSet<UserAddress> UserAddresses { get; set; } = null!;
 
-	public virtual DbSet<UserRelationship> UserRelationships { get; set; }
+	public virtual DbSet<UserRelationship> UserRelationships { get; set; } = null!;
 
-	public virtual DbSet<UserSession> UserSessions { get; set; }
+	public virtual DbSet<UserSession> UserSessions { get; set; } = null!;
 
-	public virtual DbSet<ReceiptProduct> ReceiptProducts { get; set; }
+	public virtual DbSet<ReceiptProduct> ReceiptProducts { get; set; } = null!;
 
-	protected override void OnModelCreating(ModelBuilder modelBuilder)
+	public virtual DbSet<EncryptionTest> EncryptionTests { get; set; } = null!;
+
+	protected override void OnModelCreating(ModelBuilder builder)
 	{
-		base.OnModelCreating(modelBuilder);
+		builder.UseEncryption(_provider);
 
-		modelBuilder.Entity<Address>(entity =>
+		base.OnModelCreating(builder);
+
+		builder.Entity<Address>(entity =>
 		{
 			entity.HasKey(e => e.AddressId).HasName("PK__Address__CAA247C81434C0EC");
 
@@ -108,7 +118,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasColumnName("street");
 		});
 
-		modelBuilder.Entity<Bank>(entity =>
+		builder.Entity<Bank>(entity =>
 		{
 			entity.HasKey(e => e.BankId).HasName("PK__Bank__4076F70387093681");
 
@@ -141,7 +151,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasColumnName("updated_at");
 		});
 
-		modelBuilder.Entity<BankAccount>(entity =>
+		builder.Entity<BankAccount>(entity =>
 		{
 			entity.HasKey(e => e.AccountId).HasName("PK__BankAcco__46A222CD37890FB4");
 
@@ -195,7 +205,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__BankAccou__user___65370702");
 		});
 
-		modelBuilder.Entity<BankTransaction>(entity =>
+		builder.Entity<BankTransaction>(entity =>
 		{
 			entity.HasKey(e => e.TransactionId).HasName("PK__BankTran__85C600AF22A200E2");
 
@@ -232,7 +242,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__BankTrans__accou__6BE40491");
 		});
 
-		modelBuilder.Entity<Category>(entity =>
+		builder.Entity<Category>(entity =>
 		{
 			entity.HasKey(e => e.CategoryId).HasName("PK__Category__D54EE9B481C94F07");
 
@@ -263,7 +273,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__Category__parent__4316F928");
 		});
 
-		modelBuilder.Entity<Company>(entity =>
+		builder.Entity<Company>(entity =>
 		{
 			entity.HasKey(e => e.CompanyId).HasName("PK__Company__3E267235E7687D3B");
 
@@ -301,7 +311,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasColumnName("website");
 		});
 
-		modelBuilder.Entity<CompanyAddress>(entity =>
+		builder.Entity<CompanyAddress>(entity =>
 		{
 			entity.HasKey(e => e.CompanyAddressId).HasName("PK__CompanyA__5650FC57CC4984E6");
 
@@ -336,7 +346,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__CompanyAd__compa__72C60C4A");
 		});
 
-		modelBuilder.Entity<Debt>(entity =>
+		builder.Entity<Debt>(entity =>
 		{
 			entity.HasKey(e => e.DebtId).HasName("PK__Debt__A7DCE7F913425E57");
 
@@ -399,7 +409,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__Debt__creditor_u__4E53A1AA");
 		});
 
-		modelBuilder.Entity<Expense>(entity =>
+		builder.Entity<Expense>(entity =>
 		{
 			entity.HasKey(e => e.ExpenseId).HasName("PK__Expense__404B6A6B714931B5");
 
@@ -485,7 +495,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__Expense__user_id__32AB8735");
 		});
 
-		modelBuilder.Entity<ExpenseCategory>(entity =>
+		builder.Entity<ExpenseCategory>(entity =>
 		{
 			entity.HasKey(e => e.ExpenseCategoryId).HasName("PK__ExpenseC__01F417D73F5C647A");
 
@@ -511,7 +521,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__ExpenseCa__paren__2A164134");
 		});
 
-		modelBuilder.Entity<Frequency>(entity =>
+		builder.Entity<Frequency>(entity =>
 		{
 			entity.HasKey(e => e.FrequencyId).HasName("PK__Frequenc__F32AB2AB880FB888");
 
@@ -529,7 +539,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasColumnName("frequency_name");
 		});
 
-		modelBuilder.Entity<Income>(entity =>
+		builder.Entity<Income>(entity =>
 		{
 			entity.HasKey(e => e.IncomeId).HasName("PK__Income__8DC777A62C4377E8");
 
@@ -608,7 +618,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__Income__user_id__208CD6FA");
 		});
 
-		modelBuilder.Entity<IncomeCategory>(entity =>
+		builder.Entity<IncomeCategory>(entity =>
 		{
 			entity.HasKey(e => e.IncomeCategoryId).HasName("PK__IncomeCa__95C31FD04B6F8760");
 
@@ -630,7 +640,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__IncomeCat__paren__17F790F9");
 		});
 
-		modelBuilder.Entity<Investment>(entity =>
+		builder.Entity<Investment>(entity =>
 		{
 			entity.HasKey(e => e.InvestmentId).HasName("PK__Investme__2093C283C4A88188");
 
@@ -678,7 +688,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__Investmen__loane__55F4C372");
 		});
 
-		modelBuilder.Entity<Label>(entity =>
+		builder.Entity<Label>(entity =>
 		{
 			entity.HasKey(e => e.LabelId).HasName("PK__Label__E44FFA5872065241");
 
@@ -698,7 +708,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasColumnName("label_name");
 		});
 
-		modelBuilder.Entity<LabelAssignment>(entity =>
+		builder.Entity<LabelAssignment>(entity =>
 		{
 			entity.HasKey(e => e.LabelAssignmentId).HasName("PK__LabelAss__F27DEC24E3563F24");
 
@@ -720,7 +730,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__LabelAssi__label__49C3F6B7");
 		});
 
-		modelBuilder.Entity<PaymentMethod>(entity =>
+		builder.Entity<PaymentMethod>(entity =>
 		{
 			entity.HasKey(e => e.PaymentMethodId).HasName("PK__PaymentM__8A3EA9EB9B8919FC");
 
@@ -738,7 +748,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasColumnName("name");
 		});
 
-		modelBuilder.Entity<Product>(entity =>
+		builder.Entity<Product>(entity =>
 		{
 			entity.HasKey(e => e.ProductId).HasName("PK__Product__47027DF51756F8BB");
 
@@ -824,7 +834,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__Product__w_unit__02FC7413");
 		});
 
-		modelBuilder.Entity<Receipt>(entity =>
+		builder.Entity<Receipt>(entity =>
 		{
 			entity.HasKey(e => e.ReceiptId).HasName("PK__Receipt__91F52C1FA2C53D87");
 
@@ -873,7 +883,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__Receipt__store_i__09A971A2");
 		});
 
-		modelBuilder.Entity<ReceiptPayment>(entity =>
+		builder.Entity<ReceiptPayment>(entity =>
 		{
 			entity.HasKey(e => e.ReceiptPaymentId).HasName("PK__ReceiptP__CE878B50AB921B4A");
 
@@ -895,7 +905,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__ReceiptPa__recei__1332DBDC");
 		});
 
-		modelBuilder.Entity<ReceiptTaxDetail>(entity =>
+		builder.Entity<ReceiptTaxDetail>(entity =>
 		{
 			entity.HasKey(e => e.ReceiptTaxDetailId).HasName("PK__ReceiptT__190DF74F5F3FD40C");
 
@@ -920,7 +930,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__ReceiptTa__tax_r__10566F31");
 		});
 
-		modelBuilder.Entity<Saving>(entity =>
+		builder.Entity<Saving>(entity =>
 		{
 			entity.HasKey(e => e.SavingsId).HasName("PK__Savings__AC1BA043D0E18128");
 
@@ -977,7 +987,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__Savings__user_id__43D61337");
 		});
 
-		modelBuilder.Entity<Store>(entity =>
+		builder.Entity<Store>(entity =>
 		{
 			entity.HasKey(e => e.StoreId).HasName("PK__Store__A2F2A30C9852CCAC");
 
@@ -995,7 +1005,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasColumnName("tax_id");
 		});
 
-		modelBuilder.Entity<StoreAddress>(entity =>
+		builder.Entity<StoreAddress>(entity =>
 		{
 			entity.HasKey(e => e.CompanyAddressId).HasName("PK__StoreAdd__5650FC573D98C8C0");
 
@@ -1028,7 +1038,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__StoreAddr__store__7D439ABD");
 		});
 
-		modelBuilder.Entity<TaxRate>(entity =>
+		builder.Entity<TaxRate>(entity =>
 		{
 			entity.HasKey(e => e.TaxRateId).HasName("PK__TaxRate__4B78B3339E326A41");
 
@@ -1056,7 +1066,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__TaxRate__receipt__0C85DE4D");
 		});
 
-		modelBuilder.Entity<UnitType>(entity =>
+		builder.Entity<UnitType>(entity =>
 		{
 			entity.HasKey(e => e.UnitId).HasName("PK__UnitType__D3AF5BD72F731E9A");
 
@@ -1071,7 +1081,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasColumnName("unit_type");
 		});
 
-		modelBuilder.Entity<UserAddress>(entity =>
+		builder.Entity<UserAddress>(entity =>
 		{
 			entity.HasKey(e => e.CompanyAddressId).HasName("PK__UserAddr__5650FC5748220D98");
 
@@ -1106,7 +1116,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__UserAddre__user___59FA5E80");
 		});
 
-		modelBuilder.Entity<UserRelationship>(entity =>
+		builder.Entity<UserRelationship>(entity =>
 		{
 			entity.HasKey(e => e.RelationshipId).HasName("PK__UserRela__C0CFD554024C1505");
 
@@ -1134,7 +1144,7 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__UserRelat__user___5FB337D6");
 		});
 
-		modelBuilder.Entity<UserSession>(entity =>
+		builder.Entity<UserSession>(entity =>
 		{
 			entity.HasKey(e => e.SessionId).HasName("PK__UserSess__69B13FDCEE3067BE");
 
@@ -1188,8 +1198,18 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__UserSessi__user___68487DD7");
 		});
 
-		OnModelCreatingPartial(modelBuilder);
+		ValueComparer<byte[]> byteArrayComparer = new(
+			(a, b) => a != null && b != null && a.SequenceEqual(b),
+			a => a != null ? a.Aggregate(0, (acc, v) => HashCode.Combine(acc, v)) : 0,
+			a => a != null ? a.ToArray() : Array.Empty<byte>()
+		);
+
+		builder.Entity<EncryptionTest>()
+			.Property(e => e.StreetEncrypted)
+			.Metadata.SetValueComparer(byteArrayComparer);
+
+		//OnModelCreatingPartial(builder);
 	}
 
-	partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+	//private partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

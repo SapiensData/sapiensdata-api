@@ -9,10 +9,12 @@ using SapiensDataAPI.Attributes;
 using SapiensDataAPI.Configs;
 using SapiensDataAPI.Data.DbContextCs;
 using SapiensDataAPI.Models; // Import models, including ApplicationUserModel
+using SapiensDataAPI.Services.ByteArrayPlainTextConverter;
+using SapiensDataAPI.Services.GlobalVariable;
 using SapiensDataAPI.Services.JwtToken; // Import services, including JwtTokenService
 using System.Text; // Import for encoding JWT secret key
 
-var builder = WebApplication.CreateBuilder(args); // Create a builder for the web application
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args); // Create a builder for the web application
 builder.Configuration.AddEnvironmentVariables(); // Add environment variables to the configuration
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());  // Registers all profiles in the project
@@ -31,6 +33,7 @@ builder.Services.AddEndpointsApiExplorer(); // Add API explorer for endpoints
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddScoped<RequireApiKeyAttribute>();
+builder.Services.AddSingleton<GlobalVariableService>();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -100,9 +103,9 @@ builder.Services.AddCors(options =>
 		});
 });
 
-var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+string? dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 //dbConnectionString = dbConnectionString.Replace("${DB_SERVER_IP}", Environment.GetEnvironmentVariable("DB_SERVER_IP"));
-var dbServerIp = Environment.GetEnvironmentVariable("DB_SERVER_IP");
+string? dbServerIp = Environment.GetEnvironmentVariable("DB_SERVER_IP");
 
 if (dbConnectionString != null && dbServerIp != null)
 {
@@ -128,9 +131,9 @@ builder.Services.AddIdentity<ApplicationUserModel, IdentityRole>() // Add Identi
 builder.Configuration["Jwt:Key"] = Env.GetString("JWT_KEY") ?? throw new InvalidOperationException("JWT Key is missing"); // Get JWT key from .env
 
 // JWT Config
-var jwtKey = builder.Configuration["Jwt:Key"]; // Store the JWT key in a variable
-var jwtIssuer = builder.Configuration["Jwt:Issuer"]; // Store the JWT issuer in a variable
-var jwtAudience = builder.Configuration["Jwt:Audience"]; // Store the JWT audience in a variable
+string? jwtKey = builder.Configuration["Jwt:Key"]; // Store the JWT key in a variable
+string? jwtIssuer = builder.Configuration["Jwt:Issuer"]; // Store the JWT issuer in a variable
+string? jwtAudience = builder.Configuration["Jwt:Audience"]; // Store the JWT audience in a variable
 
 if (string.IsNullOrEmpty(jwtKey))
 {
@@ -138,8 +141,8 @@ if (string.IsNullOrEmpty(jwtKey))
 }
 
 // JWT Validation params
-var keyBytes = Encoding.UTF8.GetBytes(jwtKey); // Convert the JWT key into a byte array
-var tokenValidationParams = new TokenValidationParameters // Set up token validation parameters
+byte[] keyBytes = Encoding.UTF8.GetBytes(jwtKey); // Convert the JWT key into a byte array
+TokenValidationParameters tokenValidationParams = new()
 {
 	ValidateIssuerSigningKey = true, // Ensure the token is signed with the correct key
 	IssuerSigningKey = new SymmetricSecurityKey(keyBytes), // Use the symmetric security key for validation
@@ -175,8 +178,13 @@ builder.Services.AddAuthentication(options =>
 	};
 });
 
-var defaultRateLimitName = "default";
-var defaultRateLimits = new DefaultRateLimitOptions();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+	options.JsonSerializerOptions.Converters.Add(new ByteArrayPlainTextConverterService());
+});
+
+string? defaultRateLimitName = "default";
+DefaultRateLimitOptions defaultRateLimits = new();
 builder.Configuration.GetSection(DefaultRateLimitOptions.MyRateLimit).Bind(defaultRateLimits);
 
 builder.Services.AddRateLimiter(options =>
@@ -193,9 +201,9 @@ builder.Services.AddRateLimiter(options =>
 });
 
 // Authorization Policies
-var roles = new[] { "SuperAdmin", "Admin", "NormalUser", "TeamLead", "Guest", "Moderator", "Developer", "Tester", "DataScientist" };
+string[] roles = ["SuperAdmin", "Admin", "NormalUser", "TeamLead", "Guest", "Moderator", "Developer", "Tester", "DataScientist"];
 
-foreach (var role in roles)
+foreach (string role in roles)
 {
 	builder.Services.AddAuthorizationBuilder()
 		.AddPolicy(role, policy => policy.RequireRole(role));
@@ -204,7 +212,7 @@ foreach (var role in roles)
 // Add Scoped services
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>(); // Add JwtTokenService to the service collection with Scoped lifetime
 
-var app = builder.Build(); // Build the application
+WebApplication app = builder.Build(); // Build the application
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment()) // Check if the application is in development environment
@@ -214,11 +222,11 @@ if (app.Environment.IsDevelopment()) // Check if the application is in developme
 }
 
 // Create roles on startup
-using (var scope = app.Services.CreateScope()) // Create a scope for dependency injection
+using (IServiceScope scope = app.Services.CreateScope()) // Create a scope for dependency injection
 {
-	var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(); // Get the RoleManager service
-	//var roles = new[] { "Admin", "NormalUser", "SuperAdmin", "Moderator", "TeamLead", "Developer", "Tester", "Guest", "DataScientist" }; // Define a list of roles
-	foreach (var role in roles)
+	RoleManager<IdentityRole> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(); // Get the RoleManager service
+																												   //var roles = new[] { "Admin", "NormalUser", "SuperAdmin", "Moderator", "TeamLead", "Developer", "Tester", "Guest", "DataScientist" }; // Define a list of roles
+	foreach (string role in roles)
 	{
 		if (!await roleManager.RoleExistsAsync(role)) // Check if the role exists
 		{
