@@ -24,6 +24,11 @@ namespace SapiensDataAPI.Controllers // Define the namespace for the AuthControl
 			if (userExists != null) // If user exists
 				return Conflict("Username already exists."); // Return conflict response if username exists
 
+			if (model.Username.Contains("..") || model.Username.Contains('/') || model.Username.Contains('\\'))
+			{
+				return BadRequest("Invalid username. Username cannot contain '..' or '/' or '\\'.");
+			}
+
 			ApplicationUserModel? emailExists = await _userManager.FindByEmailAsync(model.Email); // Check if the email is already in use
 			if (emailExists != null) // If email exists
 				return Conflict("Email is already in use."); // Return conflict response if email exists
