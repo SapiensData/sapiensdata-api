@@ -83,8 +83,6 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 
 	public virtual DbSet<ReceiptProduct> ReceiptProducts { get; set; } = null!;
 
-	public virtual DbSet<EncryptionTest> EncryptionTests { get; set; } = null!;
-
 	protected override void OnModelCreating(ModelBuilder builder)
 	{
 		builder.UseEncryption(_provider);
@@ -1198,15 +1196,11 @@ public partial class SapeinsDataDbContext : IdentityDbContext<ApplicationUserMod
 				.HasConstraintName("FK__UserSessi__user___68487DD7");
 		});
 
-		ValueComparer<byte[]> byteArrayComparer = new(
-			(a, b) => a != null && b != null && a.SequenceEqual(b),
-			a => a != null ? a.Aggregate(0, (acc, v) => HashCode.Combine(acc, v)) : 0,
-			a => a != null ? a.ToArray() : Array.Empty<byte>()
-		);
-
-		builder.Entity<EncryptionTest>()
-			.Property(e => e.StreetEncrypted)
-			.Metadata.SetValueComparer(byteArrayComparer);
+		//ValueComparer<byte[]> byteArrayComparer = new(
+		//	(a, b) => a != null && b != null && a.SequenceEqual(b),
+		//	a => a != null ? a.Aggregate(0, (acc, v) => HashCode.Combine(acc, v)) : 0,
+		//	a => a != null ? a.ToArray() : Array.Empty<byte>()
+		//);
 
 		//OnModelCreatingPartial(builder);
 	}
