@@ -48,6 +48,11 @@ namespace SapiensDataAPI.Controllers
 				return StatusCode(500, "Google Drive path doesn't exist in .env file.");
 			}
 
+			if (username.Contains("..") || username.Contains('/') || username.Contains('\\'))
+			{
+				return BadRequest("Invalid username. Username cannot contain '..' or '/' or '\\'.");
+			}
+
 			//var uploadsFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "SapiensCloud", "src", "media", "UserReceiptUploads", JwtPayload.Sub);
 			string filePath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", username, "receipts", receiptVailidation.FileMetadata.ReceiptFilename);
 			if (!await Task.Run(() => System.IO.File.Exists(filePath)))
@@ -298,7 +303,7 @@ namespace SapiensDataAPI.Controllers
 			List<ReceiptProduct> productsReceipts = await _context.ReceiptProducts
 				.Where(rp => rp.ReceiptId == receipt.ReceiptId)
 				.ToListAsync();
-			List<int> productsReceiptsProductsIds = productsReceipts.Select(p => p.ProductId).ToList();
+			List<int> productsReceiptsProductsIds = [.. productsReceipts.Select(p => p.ProductId)];
 
 			List<Product> products = await _context.Products
 				.Where(p => productsReceiptsProductsIds.Contains(p.ProductId))
