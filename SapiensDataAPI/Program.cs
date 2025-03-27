@@ -9,6 +9,7 @@ using SapiensDataAPI.Attributes;
 using SapiensDataAPI.Configs;
 using SapiensDataAPI.Data.DbContextCs;
 using SapiensDataAPI.Models;
+using SapiensDataAPI.Provider.Argon2IdPasswordHasher;
 using SapiensDataAPI.Services.ByteArrayPlainTextConverter;
 using SapiensDataAPI.Services.GlobalVariable;
 using SapiensDataAPI.Services.JwtToken;
@@ -21,12 +22,11 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 Env.Load(".env");
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddScoped<RequireApiKeyAttribute>();
 builder.Services.AddSingleton<GlobalVariableService>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddTransient<IPasswordHasher<ApplicationUser>, Argon2IdPasswordHasher<ApplicationUser>>();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -101,6 +101,16 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 	.AddEntityFrameworkStores<SapiensDataDbContext>() // Use the database context for storing identity data
 	.AddDefaultTokenProviders(); // Add default token providers for password reset and other identity features
 
+builder.Services.Configure<IdentityOptions>(options =>
+{
+	options.Password.RequireDigit = true;
+	options.Password.RequireLowercase = true;
+	options.Password.RequireUppercase = true;
+	options.Password.RequireNonAlphanumeric = true;
+	options.Password.RequiredLength = 13;
+	options.Password.RequiredUniqueChars = 4;
+});
+
 builder.Configuration["Jwt:Key"] = Env.GetString("JWT_KEY") ?? throw new InvalidOperationException("JWT Key is missing");
 
 // JWT Config
@@ -147,6 +157,8 @@ builder.Services.AddAuthentication(options =>
 		};
 	});
 
+builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
 	options.JsonSerializerOptions.Converters.Add(new ByteArrayPlainTextConverterService());
@@ -177,8 +189,6 @@ foreach (string role in roles)
 	builder.Services.AddAuthorizationBuilder()
 		.AddPolicy(role, policy => policy.RequireRole(role));
 }
-
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 WebApplication app = builder.Build();
 
