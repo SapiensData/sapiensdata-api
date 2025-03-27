@@ -1,18 +1,22 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SapiensDataAPI.Data.DbContextCs;
 using SapiensDataAPI.Dtos.Expense.Request;
 using SapiensDataAPI.Models;
+using System.Security.Claims;
 
 namespace SapiensDataAPI.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class ExpensesController(SapeinsDataDbContext context, IMapper mapper) : ControllerBase
+	public class ExpensesController(SapiensDataDbContext context, IMapper mapper, UserManager<ApplicationUser> userManager) : ControllerBase
 	{
-		private readonly SapeinsDataDbContext _context = context;
+		private readonly SapiensDataDbContext _context = context;
 		private readonly IMapper _mapper = mapper;
+		private readonly UserManager<ApplicationUser> _userManager = userManager;
 
 		// GET: api/Expenses
 		[HttpGet]
@@ -22,7 +26,7 @@ namespace SapiensDataAPI.Controllers
 		}
 
 		// GET: api/Expenses/5
-		[HttpGet("{id}")]
+		[HttpGet("{id:int}")]
 		public async Task<ActionResult<Expense>> GetExpense(int id)
 		{
 			Expense? expense = await _context.Expenses.FindAsync(id);
@@ -37,7 +41,8 @@ namespace SapiensDataAPI.Controllers
 
 		// PUT: api/Expenses/5
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-		[HttpPut("{id}")]
+		[HttpPut("{id:int}")]
+		[Authorize(Roles = "Admin")] // Temporary until the function is properly implemented
 		public async Task<IActionResult> PutExpense(int id, Expense expense)
 		{
 			if (id != expense.ExpenseId)
@@ -57,10 +62,8 @@ namespace SapiensDataAPI.Controllers
 				{
 					return NotFound();
 				}
-				else
-				{
-					throw;
-				}
+
+				throw;
 			}
 
 			return NoContent();
@@ -69,17 +72,32 @@ namespace SapiensDataAPI.Controllers
 		// POST: api/Expenses
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 		[HttpPost]
+		[Authorize]
 		public async Task<ActionResult<Expense>> PostExpense(ExpenseDto expenseDto)
 		{
+			string? username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			if (string.IsNullOrEmpty(username))
+			{
+				return Unauthorized("User couldn't be identified.");
+			}
+
+			ApplicationUser? user = await _userManager.FindByNameAsync(username);
+			if (user == null)
+			{
+				return NotFound("User not found.");
+			}
+
 			Expense expense = _mapper.Map<Expense>(expenseDto);
-			_context.Expenses.Add(expense);
+			expense.UserId = user.Id;
+			await _context.Expenses.AddAsync(expense);
 			await _context.SaveChangesAsync();
 
 			return CreatedAtAction("GetExpense", new { id = expense.ExpenseId }, expense);
 		}
 
 		// DELETE: api/Expenses/5
-		[HttpDelete("{id}")]
+		[HttpDelete("{id:int}")]
+		[Authorize(Roles = "Admin")] // Temporary until the function is properly implemented
 		public async Task<IActionResult> DeleteExpense(int id)
 		{
 			Expense? expense = await _context.Expenses.FindAsync(id);

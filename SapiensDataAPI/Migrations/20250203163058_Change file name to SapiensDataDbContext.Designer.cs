@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SapiensDataAPI.Data.DbContextCs;
 
@@ -10,14 +11,16 @@ using SapiensDataAPI.Data.DbContextCs;
 
 namespace SapiensDataAPI.Migrations
 {
-    [DbContext(typeof(SapeinsDataDbContext))]
-    partial class SapeinsDataContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(SapiensDataDbContext))]
+    [Migration("20250203163058_Change file name to SapiensDataDbContext")]
+    partial class ChangefilenametoSapiensDataDbContext
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -824,27 +827,6 @@ namespace SapiensDataAPI.Migrations
                     b.ToTable("Debt", (string)null);
                 });
 
-            modelBuilder.Entity("SapiensDataAPI.Models.EncryptionTest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Street")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte[]>("StreetEncrypted")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EncryptionTests", (string)null);
-                });
-
             modelBuilder.Entity("SapiensDataAPI.Models.Expense", b =>
                 {
                     b.Property<int>("ExpenseId")
@@ -1266,7 +1248,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("LoanedToUserId");
 
-                    b.ToTable("Investments", (string)null);
+                    b.ToTable("Investments");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.Label", b =>
@@ -1627,7 +1609,6 @@ namespace SapiensDataAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReceiptProductId"));
 
                     b.Property<decimal>("Discount")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
@@ -1642,7 +1623,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("ReceiptId");
 
-                    b.ToTable("ReceiptProducts", (string)null);
+                    b.ToTable("ReceiptProducts");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.ReceiptTaxDetail", b =>
@@ -1772,7 +1753,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Savings", (string)null);
+                    b.ToTable("Savings");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.Store", b =>

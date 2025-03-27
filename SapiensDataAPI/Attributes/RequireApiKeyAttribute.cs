@@ -1,32 +1,29 @@
-﻿using DotNetEnv;  // Import your ApiSettings class
+﻿using DotNetEnv;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Primitives;
 
 namespace SapiensDataAPI.Attributes
 {
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 	public class RequireApiKeyAttribute : ActionFilterAttribute
 	{
-		private IConfiguration? _configuration;
+		private const string ApiKeyHeader = "Very-cool-api-key";
 
 		public override void OnActionExecuting(ActionExecutingContext context)
 		{
-			// Get the IConfiguration instance using the IServiceProvider
-			_configuration ??= context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
-
-			if (context.HttpContext.Request.Headers.TryGetValue("Very-cool-api-key", out Microsoft.Extensions.Primitives.StringValues apiKey))
+			if (!context.HttpContext.Request.Headers.TryGetValue(ApiKeyHeader, out StringValues apiKey))
 			{
-				Env.Load(".env");
-				string? expectedApiKey = Environment.GetEnvironmentVariable("SAPIENS_ANALYZER_SERVER_KEY");
-
-				if (apiKey != expectedApiKey)
-				{
-					context.Result = new UnauthorizedResult(); // Unauthorized if API key is incorrect
-					return;
-				}
+				context.Result = new UnauthorizedResult();
+				return;
 			}
-			else
+
+			Env.Load(".env");
+			string? expectedApiKey = Environment.GetEnvironmentVariable("SAPIENS_ANALYZER_SERVER_KEY");
+
+			if (apiKey != expectedApiKey)
 			{
-				context.Result = new UnauthorizedResult(); // Unauthorized if header is missing
+				context.Result = new UnauthorizedResult();
 				return;
 			}
 

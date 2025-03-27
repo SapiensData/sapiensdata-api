@@ -1,14 +1,15 @@
-﻿namespace SapiensDataAPI.Models;
-
-public partial class Label
+﻿namespace SapiensDataAPI.Models
 {
-	public int LabelId { get; set; }
+	public class Label
+	{
+		public int LabelId { get; set; }
 
-	public string LabelName { get; set; } = null!;
+		public string LabelName { get; set; } = null!;
 
-	public string? Description { get; set; }
+		public string? Description { get; set; }
 
-	public string? ColorCode { get; set; }
+		public string? ColorCode { get; set; }
 
-	public virtual ICollection<LabelAssignment> LabelAssignments { get; set; } = [];
+		public virtual ICollection<LabelAssignment> LabelAssignments { get; set; } = [];
+	}
 }

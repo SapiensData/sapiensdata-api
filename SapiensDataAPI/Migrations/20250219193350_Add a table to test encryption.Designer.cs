@@ -11,7 +11,7 @@ using SapiensDataAPI.Data.DbContextCs;
 
 namespace SapiensDataAPI.Migrations
 {
-    [DbContext(typeof(SapeinsDataDbContext))]
+    [DbContext(typeof(SapiensDataDbContext))]
     [Migration("20250219193350_Add a table to test encryption")]
     partial class Addatabletotestencryption
     {

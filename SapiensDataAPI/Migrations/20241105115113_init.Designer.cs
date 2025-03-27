@@ -10,7 +10,7 @@ using SapiensDataAPI.Data.DbContextCs;
 
 namespace SapiensDataAPI.Migrations
 {
-	[DbContext(typeof(SapeinsDataDbContext))]
+	[DbContext(typeof(SapiensDataDbContext))]
     [Migration("20241105115113_init")]
     partial class Init
     {

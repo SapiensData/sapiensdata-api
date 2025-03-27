@@ -1,12 +1,16 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using SoftFluent.ComponentModel.DataAnnotations;
 
 namespace SapiensDataAPI.Models
 {
-	public class ApplicationUserModel : IdentityUser
+	public class ApplicationUser : IdentityUser
 	{
-		public string FirstName { get; set; } = string.Empty;
+		[Encrypted] public string FirstName { get; set; } = string.Empty;
+
 		public string? MiddleName { get; set; }
-		public string LastName { get; set; } = string.Empty;
+
+		[Encrypted] public string LastName { get; set; } = string.Empty;
+
 		public string? Prefix { get; set; }
 		public string? Suffix { get; set; }
 		public string? Nickname { get; set; }

@@ -11,7 +11,7 @@ using SapiensDataAPI.Data.DbContextCs;
 
 namespace SapiensDataAPI.Migrations
 {
-    [DbContext(typeof(SapeinsDataDbContext))]
+    [DbContext(typeof(SapiensDataDbContext))]
     [Migration("20241111113041_Store adress")]
     partial class Storeadress
     {

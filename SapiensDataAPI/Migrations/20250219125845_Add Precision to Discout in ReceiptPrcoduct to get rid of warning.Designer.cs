@@ -11,7 +11,7 @@ using SapiensDataAPI.Data.DbContextCs;
 
 namespace SapiensDataAPI.Migrations
 {
-    [DbContext(typeof(SapeinsDataDbContext))]
+    [DbContext(typeof(SapiensDataDbContext))]
     [Migration("20250219125845_Add Precision to Discout in ReceiptPrcoduct to get rid of warning")]
     partial class AddPrecisiontoDiscoutinReceiptPrcoducttogetridofwarning
     {
