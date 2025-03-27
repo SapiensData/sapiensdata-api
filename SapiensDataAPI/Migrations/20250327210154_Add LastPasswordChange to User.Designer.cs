@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SapiensDataAPI.Data.DbContextCs;
 
@@ -11,9 +12,11 @@ using SapiensDataAPI.Data.DbContextCs;
 namespace SapiensDataAPI.Migrations
 {
     [DbContext(typeof(SapiensDataDbContext))]
-    partial class SapiensDataContextModelSnapshot : ModelSnapshot
+    [Migration("20250327210154_Add LastPasswordChange to User")]
+    partial class AddLastPasswordChangetoUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1248,7 +1251,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("LoanedToUserId");
 
-                    b.ToTable("Investments", (string)null);
+                    b.ToTable("Investments");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.Label", b =>
@@ -1624,7 +1627,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("ReceiptId");
 
-                    b.ToTable("ReceiptProducts", (string)null);
+                    b.ToTable("ReceiptProducts");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.ReceiptTaxDetail", b =>
@@ -1754,7 +1757,7 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Savings", (string)null);
+                    b.ToTable("Savings");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.Store", b =>

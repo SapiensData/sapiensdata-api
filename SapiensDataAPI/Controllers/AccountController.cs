@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using DotNetEnv;
+﻿using DotNetEnv;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +7,6 @@ using SapiensDataAPI.Data.DbContextCs;
 using SapiensDataAPI.Dtos.Auth.Request;
 using SapiensDataAPI.Dtos.ImageUploader.Request;
 using SapiensDataAPI.Models;
-using SapiensDataAPI.Services.JwtToken;
 using System.Globalization;
 using System.Security.Claims;
 
@@ -16,16 +14,10 @@ namespace SapiensDataAPI.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class AccountController(
-		UserManager<ApplicationUser> userManager,
-		RoleManager<IdentityRole> roleManager,
-		IJwtTokenService jwtTokenService,
-		SapiensDataDbContext context,
-		IMapper mapper) : ControllerBase
+	public class AccountController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, SapiensDataDbContext context)
+		: ControllerBase
 	{
 		private readonly SapiensDataDbContext _context = context;
-		private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
-		private readonly IMapper _mapper = mapper;
 		private readonly RoleManager<IdentityRole> _roleManager = roleManager;
 		private readonly UserManager<ApplicationUser> _userManager = userManager;
 
@@ -205,6 +197,58 @@ namespace SapiensDataAPI.Controllers
 			}
 
 			return Ok("Your account has been deleted successfully.");
+		}
+
+		[HttpPut("change-password")]
+		[Authorize]
+		public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+		{
+			string? username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			if (string.IsNullOrEmpty(username))
+			{
+				return Unauthorized("User couldn't be identified.");
+			}
+
+			if (model.Username != username)
+			{
+				return Unauthorized("You are not authorized to change the password for this user.");
+			}
+
+			if (string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.CurrentPassword) ||
+			    string.IsNullOrWhiteSpace(model.NewPassword))
+			{
+				return BadRequest("Invalid input.");
+			}
+
+			// Find user by username
+			ApplicationUser? user = await _userManager.FindByNameAsync(model.Username);
+			if (user == null)
+			{
+				return NotFound("User not found.");
+			}
+
+			if (!await _userManager.CheckPasswordAsync(user, model.CurrentPassword))
+			{
+				return Unauthorized("Incorrect password.");
+			}
+
+			if (await _userManager.CheckPasswordAsync(user, model.NewPassword))
+			{
+				return BadRequest("New password cannot be the same as the old password.");
+			}
+
+			// Change the password
+			IdentityResult result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+			if (!result.Succeeded)
+			{
+				return BadRequest(result.Errors.Select(e => e.Description));
+			}
+
+			user.LastPasswordChange = DateTime.UtcNow;
+			await _userManager.UpdateAsync(user);
+
+			// Return success response
+			return Ok("Password changed successfully.");
 		}
 
 		[HttpPut("admin/update-user/{username}")]

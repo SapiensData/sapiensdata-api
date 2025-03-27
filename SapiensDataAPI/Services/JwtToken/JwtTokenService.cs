@@ -26,10 +26,10 @@ namespace SapiensDataAPI.Services.JwtToken
 				throw new InvalidOperationException("No username provided.");
 			}
 
-			List<Claim> claims =
+			IEnumerable<Claim> claims =
 			[
 				new(JwtRegisteredClaimNames.Sub, user.UserName),
-				new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+				new(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString()),
 				// Add each user role as a claim
 				.. roles.Select(role => new Claim("role", role))
 			];
@@ -49,7 +49,7 @@ namespace SapiensDataAPI.Services.JwtToken
 				_configuration["Jwt:Issuer"],
 				_configuration["Jwt:Audience"],
 				claims,
-				DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"], CultureInfo.InvariantCulture)),
+				expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"], CultureInfo.InvariantCulture)),
 				signingCredentials: credentials);
 
 			return new JwtSecurityTokenHandler().WriteToken(token);

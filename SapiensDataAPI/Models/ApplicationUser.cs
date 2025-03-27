@@ -37,6 +37,7 @@ namespace SapiensDataAPI.Models
 		public DateTime? UpdatedAt { get; set; }
 		public DateTime? LastLogin { get; set; }
 		public string? Status { get; set; }
+		public DateTime LastPasswordChange { get; set; } = DateTime.UtcNow;
 		public virtual ICollection<BankAccount> BankAccounts { get; set; } = [];
 		public virtual ICollection<Debt> Debts { get; set; } = [];
 		public virtual ICollection<Expense> ExpenseSourceUsers { get; set; } = [];
