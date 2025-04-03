@@ -1,25 +1,24 @@
 ﻿// SapiensDataAPI/Services/JwtTokenService.cs
-using Microsoft.AspNetCore.Identity; // Import Identity for managing user roles and identity
-using Microsoft.IdentityModel.Tokens; // Import for security token handling
-using SapiensDataAPI.Dtos.Auth.Request; // Import request DTOs for authentication
-using SapiensDataAPI.Dtos.Auth.Response; // Import response DTOs for authentication
-using SapiensDataAPI.Models; // Import user model
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using SapiensDataAPI.Dtos.Auth.Request;
+using SapiensDataAPI.Dtos.Auth.Response;
+using SapiensDataAPI.Models;
 using System.Globalization;
-using System.IdentityModel.Tokens.Jwt; // Import for handling JWT tokens
-using System.Security.Claims; // Import for handling claims in JWT
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
-using System.Text.Json; // Import for encoding the JWT key
 
-namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
+namespace SapiensDataAPI.Services.JwtToken
 {
-	public class JwtTokenService(UserManager<ApplicationUserModel> userManager, IConfiguration configuration) : IJwtTokenService // Implement the IJwtTokenService interface
+	public class JwtTokenService(UserManager<ApplicationUser> userManager, IConfiguration configuration) : IJwtTokenService
 	{
-		private readonly UserManager<ApplicationUserModel> _userManager = userManager; // User manager for managing user data and roles
-		private readonly IConfiguration _configuration = configuration; // Configuration to access settings like JWT key, issuer, etc.
+		private readonly IConfiguration _configuration = configuration;
+		private readonly UserManager<ApplicationUser> _userManager = userManager;
 
-		public async Task<string> GenerateToken(ApplicationUserModel user) // Method to generate a JWT token
+		public async Task<string> GenerateToken(ApplicationUser user)
 		{
-			// Get user roles
 			IList<string> roles = await _userManager.GetRolesAsync(user);
 
 			if (string.IsNullOrEmpty(user.UserName))
@@ -27,14 +26,13 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 				throw new InvalidOperationException("No username provided.");
 			}
 
-			// Create claims list
-			List<Claim> claims =
+			IEnumerable<Claim> claims =
 			[
-				new(JwtRegisteredClaimNames.Sub, user.UserName), // Add user's username as a claim
-				new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-				// Add roles as claims
-				.. roles.Select(role => new Claim("role", role)) // Add each user role as a claim, // Add a unique token ID
-            ];
+				new(JwtRegisteredClaimNames.Sub, user.UserName),
+				new(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString()),
+				// Add each user role as a claim
+				.. roles.Select(role => new Claim("role", role))
+			];
 
 			string? jwtKey = _configuration["Jwt:Key"];
 
@@ -43,31 +41,30 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 				throw new InvalidOperationException("JWT Key is not configured in the settings.");
 			}
 
-			SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(jwtKey)); // Generate the symmetric security key
+			SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(jwtKey));
 
-			SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256); // Create signing credentials using HMAC SHA256
+			SigningCredentials credentials = new(key, SecurityAlgorithms.HmacSha256);
 
-			// Create the token
 			JwtSecurityToken token = new(
-				issuer: _configuration["Jwt:Issuer"], // Define the token issuer
-				audience: _configuration["Jwt:Audience"], // Define the token audience
-				claims: claims, // Pass the claims into the token
-				DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"], CultureInfo.InvariantCulture)), // Set token expiration time
-				signingCredentials: creds); // Pass signing credentials
+				_configuration["Jwt:Issuer"],
+				_configuration["Jwt:Audience"],
+				claims,
+				expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"], CultureInfo.InvariantCulture)),
+				signingCredentials: credentials);
 
-			// Return the generated token
-			return new JwtSecurityTokenHandler().WriteToken(token); // Write the token and return it as a string
+			return new JwtSecurityTokenHandler().WriteToken(token);
 		}
 
-		public async Task<RefreshTokenResponseDto> VerifyToken(TokenRequestDto tokenRequest) // Method to verify a token
+		// Why does this exist when it's never used, I think that the identity framework already verifies the tokens
+		public async Task<RefreshTokenResponseDto> VerifyToken(TokenRequestDto tokenRequest)
 		{
 			string jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured.");
 
-			JwtSecurityTokenHandler tokenHandler = new(); // Instantiate a token handler
+			JwtSecurityTokenHandler tokenHandler = new();
 			TokenValidationParameters tokenValidationParameters = new()
 			{
-				ValidateIssuerSigningKey = true, // Validate the signing key of the token
-				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), // Set the signing key from configuration
+				ValidateIssuerSigningKey = true,
+				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
 				ValidateIssuer = true,
 				ValidIssuer = _configuration["Jwt:Issuer"],
 				ValidateAudience = true,
@@ -80,65 +77,28 @@ namespace SapiensDataAPI.Services.JwtToken // Define the service namespace
 				//var principal = tokenHandler.ValidateToken(tokenRequest.Token, tokenValidationParameters, out var validatedToken); // Validate the token
 				(ClaimsPrincipal principal, SecurityToken validatedToken) = await Task.Run(() =>
 				{
-					// Validate the token and capture principal and validatedToken
-					ClaimsPrincipal principal = tokenHandler.ValidateToken(tokenRequest.Token, tokenValidationParameters, out SecurityToken? validatedToken);
+					ClaimsPrincipal principal =
+						tokenHandler.ValidateToken(tokenRequest.Token, tokenValidationParameters, out SecurityToken? validatedToken);
 					return (principal, validatedToken);
 				});
 
 				// Check if the token is expired
-				if (validatedToken.ValidTo < DateTime.UtcNow) // Check if the token expiration time has passed
+				if (validatedToken.ValidTo < DateTime.UtcNow)
 				{
-					return new RefreshTokenResponseDto
-					{
-						IsValid = false, // Set token as invalid
-						ErrorMessage = "Token is expired." // Return token expiration error message
-					};
+					return new RefreshTokenResponseDto { IsValid = false, ErrorMessage = "Token is expired." };
 				}
 
 				return new RefreshTokenResponseDto
 				{
-					IsValid = true, // Set token as valid
-					Claims = [.. principal.Claims.Select(c => new ClaimDto { Type = c.Type, Value = c.Value })] // Map claims to a list of ClaimDto
+					IsValid = true,
+					// Map claims to a list of ClaimDto
+					Claims = [.. principal.Claims.Select(c => new ClaimDto { Type = c.Type, Value = c.Value })]
 				};
 			}
-			catch (Exception ex) // Catch any exceptions during token validation
+			catch (Exception ex)
 			{
-				return new RefreshTokenResponseDto
-				{
-					IsValid = false, // Set token as invalid in case of an error
-					ErrorMessage = ex.Message // Return the error message
-				};
+				return new RefreshTokenResponseDto { IsValid = false, ErrorMessage = ex.Message };
 			}
-		}
-
-		public JsonDocument DecodeJwtPayloadToJson(string token)
-		{
-			// Check if token is empty or null
-			if (string.IsNullOrEmpty(token))
-			{
-				throw new ArgumentException("JWT token cannot be null or empty.");
-			}
-
-			// Split the token into parts
-			string[] parts = token.Split('.');
-			if (parts.Length < 3)
-			{
-				throw new ArgumentException("Invalid JWT token format.");
-			}
-
-			// Decode the payload (second part) from Base64
-			string payload = parts[1];
-			string base64Payload = payload.Replace('-', '+').Replace('_', '/'); // Standard Base64 format
-			int padding = 4 - (base64Payload.Length % 4);
-			if (padding < 4)
-			{
-				base64Payload += new string('=', padding);
-			}
-
-			byte[] bytes = Convert.FromBase64String(base64Payload);
-
-			// Parse and return the decoded JSON
-			return JsonDocument.Parse(bytes);
 		}
 	}
 }

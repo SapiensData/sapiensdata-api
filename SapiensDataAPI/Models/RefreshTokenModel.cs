@@ -13,7 +13,6 @@ namespace SapiensDataAPI.Models
 		public DateTime CreatedAt { get; set; }
 		public DateTime ExpiredAt { get; set; }
 
-		[ForeignKey(nameof(UserId))]
-		public ApplicationUserModel User { get; set; } = default!; // Ensure it's not null when setting the user
+		[ForeignKey(nameof(UserId))] public ApplicationUser User { get; set; } = default!; // Ensure it's not null when setting the user
 	}
 }

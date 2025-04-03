@@ -9,92 +9,103 @@ namespace SapiensDataAPI.Provider.EncryptionProvider
 	{
 		private readonly GlobalVariableService _globalVariableService = globalVariableService;
 
-		public const int AesBlockSize = 128;
+		private readonly int _nonceSize = AesGcm.NonceByteSizes.MaxSize;
+		private readonly int _tagSize = AesGcm.TagByteSizes.MaxSize;
 
-		public const int InitializationVectorSize = 16;
+		// TODO maybe in the future include "associated data" in the encryption process
 
-		private readonly CipherMode _mode = CipherMode.CBC;
-		private readonly PaddingMode _padding = PaddingMode.PKCS7;
-
-		private Aes CreateCryptographyProvider(CipherMode mode, PaddingMode padding)
+		public byte[] Decrypt(byte[] input)
 		{
-			string encryptionKey = _globalVariableService.SymmetricKey;
-
-			byte[] encryptionKeyBytes = Encoding.UTF8.GetBytes(encryptionKey);
-
-			if (encryptionKeyBytes.Length != 32)
+			if (input.Length == 0)
 			{
-				throw new ArgumentException("Encryption key must be 32 bytes long.");
+				return [];
 			}
 
-			Aes aes = Aes.Create();
+			if (input.Length < _nonceSize + _tagSize)
+			{
+				throw new ArgumentException("Input is too short.");
+			}
 
-			aes.Mode = mode;
-			aes.KeySize = encryptionKeyBytes.Length * 8;
-			aes.BlockSize = AesBlockSize;
-			aes.FeedbackSize = AesBlockSize;
-			aes.Padding = padding;
-			aes.Key = encryptionKeyBytes;
-			aes.GenerateIV();
+			string encryptionKey = _globalVariableService.SymmetricKey;
+			byte[] key = Encoding.UTF8.GetBytes(encryptionKey);
+			if (key.Length != 32)
+			{
+				throw new ArgumentException("Encryption key must be 32 bytes.");
+			}
 
-			return aes;
+			byte[] nonce = new byte[_nonceSize];
+			byte[] tag = new byte[_tagSize];
+			int ciphertextLength = input.Length - nonce.Length - tag.Length;
+			byte[] ciphertext = new byte[ciphertextLength];
+
+			try
+			{
+				Buffer.BlockCopy(input, 0, nonce, 0, nonce.Length);
+				Buffer.BlockCopy(input, nonce.Length, tag, 0, tag.Length);
+				Buffer.BlockCopy(input, nonce.Length + tag.Length, ciphertext, 0, ciphertextLength);
+			}
+			catch (Exception ex)
+			{
+				throw new ArgumentException("Input is wrong.", ex);
+			}
+
+			byte[] plaintext = new byte[ciphertextLength];
+			try
+			{
+				using AesGcm aesGcm = new(key, tag.Length);
+				aesGcm.Decrypt(nonce, ciphertext, tag, plaintext);
+			}
+			catch (Exception e)
+			{
+				throw new CryptographicException($"Something went wrong while decrypting: {e.Message}", e);
+			}
+
+			return plaintext;
 		}
 
 		public byte[] Encrypt(byte[] input)
 		{
-			if (input == null || input.Length == 0)
+			if (input.Length == 0)
 			{
 				return [];
 			}
 
-			// Create the AES provider without a preset IV
-			using Aes aes = CreateCryptographyProvider(_mode, _padding);
-
-			using ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
-			using MemoryStream memoryStream = new();
-			// Write the IV at the beginning of the stream
-			memoryStream.Write(aes.IV, 0, aes.IV.Length);
-
-			using (CryptoStream cryptoStream = new(memoryStream, encryptor, CryptoStreamMode.Write, leaveOpen: true))
+			string encryptionKey = _globalVariableService.SymmetricKey;
+			byte[] key = Encoding.UTF8.GetBytes(encryptionKey);
+			if (key.Length != 32)
 			{
-				cryptoStream.Write(input, 0, input.Length);
-				cryptoStream.FlushFinalBlock();
+				throw new ArgumentException("Encryption key must be 32 bytes.");
 			}
 
-			// Return the combined IV + ciphertext
-			return memoryStream.ToArray();
-		}
+			byte[] nonce = new byte[_nonceSize];
+			RandomNumberGenerator.Fill(nonce);
 
-		public byte[] Decrypt(byte[] input)
-		{
-			if (input == null || input.Length == 0)
+			byte[] ciphertext = new byte[input.Length];
+			byte[] tag = new byte[_tagSize];
+			byte[] result = new byte[nonce.Length + tag.Length + ciphertext.Length];
+
+			try
 			{
-				return [];
+				using AesGcm aesGcm = new(key, tag.Length);
+				aesGcm.Encrypt(nonce, input, ciphertext, tag);
+			}
+			catch (Exception e)
+			{
+				throw new CryptographicException($"Something went wrong while encrypting: {e.Message}", e);
 			}
 
-			if (input == null || input.Length < InitializationVectorSize)
+			try
 			{
-				throw new ArgumentException("Input is too short to contain a valid IV.");
+				Buffer.BlockCopy(nonce, 0, result, 0, nonce.Length);
+				Buffer.BlockCopy(tag, 0, result, nonce.Length, tag.Length);
+				Buffer.BlockCopy(ciphertext, 0, result, nonce.Length + tag.Length, ciphertext.Length);
+			}
+			catch (Exception ex)
+			{
+				throw new ArgumentException("Input is wrong.", ex);
 			}
 
-			using MemoryStream memoryStream = new(input);
-			// Extract the IV from the first 16 bytes
-			byte[] iv = new byte[InitializationVectorSize];
-			int bytesRead = memoryStream.Read(iv, 0, iv.Length);
-			if (bytesRead != iv.Length)
-			{
-				throw new ArgumentException("Invalid input: IV missing or corrupt.");
-			}
-
-			// Create the AES provider without a preset IV and then assign the extracted IV
-			using Aes aes = CreateCryptographyProvider(_mode, _padding);
-			aes.IV = iv;
-
-			using ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-			using CryptoStream cryptoStream = new(memoryStream, decryptor, CryptoStreamMode.Read, leaveOpen: true);
-			using MemoryStream outputStream = new();
-			cryptoStream.CopyTo(outputStream);
-			return outputStream.ToArray();
+			return result;
 		}
 	}
 }

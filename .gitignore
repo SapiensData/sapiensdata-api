@@ -516,3 +516,4 @@ ehthumbs.db
 # Environment Variables
 *.env
 SapiensDataAPI/.env
+.idea

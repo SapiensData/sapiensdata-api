@@ -7,25 +7,28 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using SapiensDataAPI.Attributes;
 using SapiensDataAPI.Data.DbContextCs;
-using SapiensDataAPI.Dtos;
 using SapiensDataAPI.Dtos.ImageUploader.Request;
 using SapiensDataAPI.Dtos.Receipt.JSON;
 using SapiensDataAPI.Dtos.Receipt.Response;
 using SapiensDataAPI.Models;
 using SapiensDataAPI.Services.JwtToken;
 using System.Globalization;
-using System.Text.Json;
+using System.Security.Claims;
 
 namespace SapiensDataAPI.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class ReceiptsController(SapeinsDataDbContext context, IJwtTokenService jwtTokenService, IMapper mapper, UserManager<ApplicationUserModel> userManager) : ControllerBase
+	public class ReceiptsController(
+		SapiensDataDbContext context,
+		IJwtTokenService jwtTokenService,
+		IMapper mapper,
+		UserManager<ApplicationUser> userManager) : ControllerBase
 	{
-		private readonly SapeinsDataDbContext _context = context;
-		private readonly IJwtTokenService _jwtTokenService = jwtTokenService; // Dependency injection for handling JWT token generation
+		private readonly SapiensDataDbContext _context = context;
+		private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
 		private readonly IMapper _mapper = mapper;
-		private readonly UserManager<ApplicationUserModel> _userManager = userManager;
+		private readonly UserManager<ApplicationUser> _userManager = userManager;
 
 		// GET: api/Receipts
 		[HttpGet]
@@ -35,14 +38,13 @@ namespace SapiensDataAPI.Controllers
 			return await _context.Receipts.ToListAsync();
 		}
 
-		// GET: api/Receipts
 		[HttpPost("receive-json-from-python")]
 		[RequireApiKey]
-		public async Task<IActionResult> ReceiveJSON([FromBody] ReceiptVailidation receiptVailidation, [FromHeader] string username)
+		public async Task<IActionResult> ReceiveJson([FromBody] ReceiptVailidation receiptValidation, [FromHeader] string username)
 		{
 			Env.Load(".env");
 
-			string? googleDrivePath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_BEGINNING_PATH");
+			string? googleDrivePath = Environment.GetEnvironmentVariable("DRIVE_BEGINNING_PATH");
 			if (googleDrivePath == null)
 			{
 				return StatusCode(500, "Google Drive path doesn't exist in .env file.");
@@ -54,7 +56,8 @@ namespace SapiensDataAPI.Controllers
 			}
 
 			//var uploadsFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "SapiensCloud", "src", "media", "UserReceiptUploads", JwtPayload.Sub);
-			string filePath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", username, "receipts", receiptVailidation.FileMetadata.ReceiptFilename);
+			string filePath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", username, "receipts",
+				receiptValidation.FileMetadata.ReceiptFilename);
 			if (!await Task.Run(() => System.IO.File.Exists(filePath)))
 			{
 				return BadRequest("File doesn't exist");
@@ -66,10 +69,11 @@ namespace SapiensDataAPI.Controllers
 				return BadRequest("Directory is not ok");
 			}
 
-			string correctedStoreName = receiptVailidation.Store.Name.Replace(' ', '-');
+			string correctedStoreName = receiptValidation.Store.Name.Replace(' ', '-');
 
 			string extension = Path.GetExtension(filePath);
-			string newFileName = correctedStoreName + "_" + receiptVailidation.Receipt.BuyDatetime.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + extension;
+			string newFileName = correctedStoreName + "_" +
+			                     receiptValidation.Receipt.BuyDatetime.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + extension;
 
 			// Create the new path by combining the directory and new file name
 			string newPath = Path.Combine(directory, newFileName);
@@ -85,7 +89,7 @@ namespace SapiensDataAPI.Controllers
 			string[] pathSegments = filePath.Split(Path.DirectorySeparatorChar);
 			string lastThreeSegments = string.Join(Path.DirectorySeparatorChar.ToString(), pathSegments.TakeLast(3));
 
-			ApplicationUserModel? user = await _userManager.FindByNameAsync(username);
+			ApplicationUser? user = await _userManager.FindByNameAsync(username);
 			if (user == null)
 			{
 				// Handle the case where the user is not found
@@ -96,26 +100,24 @@ namespace SapiensDataAPI.Controllers
 				.Where(r => r.ReceiptImagePath != null && r.ReceiptImagePath.EndsWith(lastThreeSegments) && r.UserId == user.Id)
 				.ToListAsync();
 
-			if (receipts.Count == 0)
+			switch (receipts.Count)
 			{
-				return NotFound("No receipts found");
+				case 0:
+					return NotFound("No receipts found");
+				case > 1:
+					return BadRequest($"Too many receipts, should be 1 but were {receipts.Count}");
 			}
 
-			if (receipts.Count > 1)
-			{
-				return BadRequest($"Too many receipts, should be 1 but were {receipts.Count}");
-			}
-
-			if (receiptVailidation.Product.Count == 0)
+			if (receiptValidation.Product.Count == 0)
 			{
 				return BadRequest("No products found");
 			}
 
-			_mapper.Map(receiptVailidation.Receipt, receipts[0]);
+			_mapper.Map(receiptValidation.Receipt, receipts[0]);
 			receipts[0].ReceiptImagePath = newPath;
 
-			List<Product> products = new(receiptVailidation.Product.Count);
-			foreach (ProductV product in receiptVailidation.Product)
+			List<Product> products = new(receiptValidation.Product.Count);
+			foreach (ProductV product in receiptValidation.Product)
 			{
 				products.Add(_mapper.Map<Product>(product));
 			}
@@ -124,31 +126,24 @@ namespace SapiensDataAPI.Controllers
 
 			List<int> productIds = [.. products.Select(p => p.ProductId)];
 
-			List<ReceiptProduct> receiptProducts = new(receiptVailidation.Product.Count);
-			foreach (int item in productIds)
-			{
-				receiptProducts.Add(new ReceiptProduct
-				{
-					ReceiptId = receipts[0].ReceiptId,
-					ProductId = item
-				});
-			}
+			List<ReceiptProduct> receiptProducts = new(receiptValidation.Product.Count);
+			receiptProducts.AddRange(productIds.Select(item => new ReceiptProduct { ReceiptId = receipts[0].ReceiptId, ProductId = item }));
 
 			await _context.ReceiptProducts.AddRangeAsync(receiptProducts);
 
-			TaxRate taxRate = _mapper.Map<TaxRate>(receiptVailidation.TaxRate);
+			TaxRate taxRate = _mapper.Map<TaxRate>(receiptValidation.TaxRate);
 			taxRate.ReceiptId = receipts[0].ReceiptId;
 			await _context.AddAsync(taxRate);
 
-			ReceiptTaxDetail receiptTaxDetails = _mapper.Map<ReceiptTaxDetail>(receiptVailidation.ReceiptTaxDetail);
+			ReceiptTaxDetail receiptTaxDetails = _mapper.Map<ReceiptTaxDetail>(receiptValidation.ReceiptTaxDetail);
 			receiptTaxDetails.ReceiptId = receipts[0].ReceiptId;
 			receiptTaxDetails.TaxRateId = taxRate.TaxRateId;
 			await _context.AddAsync(receiptTaxDetails);
 
-			Address address = _mapper.Map<Address>(receiptVailidation.Store);
+			Address address = _mapper.Map<Address>(receiptValidation.Store);
 			await _context.AddAsync(address);
 
-			Store store = _mapper.Map<Store>(receiptVailidation.Store);
+			Store store = _mapper.Map<Store>(receiptValidation.Store);
 			await _context.AddAsync(store);
 
 			receipts[0].StoreId = store.StoreId;
@@ -156,9 +151,7 @@ namespace SapiensDataAPI.Controllers
 
 			StoreAddress storeAddress = new()
 			{
-				StoreId = store.StoreId,
-				AddressId = address.AddressId,
-				AddressType = receiptVailidation.Store.AddressType
+				StoreId = store.StoreId, AddressId = address.AddressId, AddressType = receiptValidation.Store.AddressType
 			};
 			await _context.AddAsync(storeAddress);
 
@@ -172,10 +165,8 @@ namespace SapiensDataAPI.Controllers
 				{
 					return NotFound();
 				}
-				else
-				{
-					throw;
-				}
+
+				throw;
 			}
 
 			return StatusCode(501, "Python path isn't implemented");
@@ -234,22 +225,19 @@ namespace SapiensDataAPI.Controllers
 		}
 
 		// GET: api/Receipts/5
-		[HttpGet("{offset}")]
+		[HttpGet("{offset:int}")]
 		[Authorize]
-		public async Task<ActionResult<ResReceiptDto>> GetReceipt(int offset = 0)
+		public async Task<IActionResult> GetReceipt(int offset = 0)
 		{
-			string token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-			JsonElement decodedToken = _jwtTokenService.DecodeJwtPayloadToJson(token).RootElement;
-			JwtPayload? JwtPayload = JsonSerializer.Deserialize<JwtPayload>(decodedToken) ?? null;
-			if (JwtPayload == null)
+			string? username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			if (string.IsNullOrEmpty(username))
 			{
-				return BadRequest("JwtPayload is not ok.");
+				return Unauthorized("User couldn't be identified.");
 			}
 
-			ApplicationUserModel? user = await _userManager.FindByNameAsync(JwtPayload.Sub);
+			ApplicationUser? user = await _userManager.FindByNameAsync(username);
 			if (user == null)
 			{
-				// Handle the case where the user is not found
 				return NotFound("User not found");
 			}
 
@@ -297,7 +285,7 @@ namespace SapiensDataAPI.Controllers
 				return BadRequest("Content type of the image can not be determined");
 			}
 
-			byte[] imageBytes = System.IO.File.ReadAllBytes(receipt.ReceiptImagePath);
+			byte[] imageBytes = await System.IO.File.ReadAllBytesAsync(receipt.ReceiptImagePath);
 			string base64Image = Convert.ToBase64String(imageBytes);
 
 			List<ReceiptProduct> productsReceipts = await _context.ReceiptProducts
@@ -310,33 +298,21 @@ namespace SapiensDataAPI.Controllers
 				.ToListAsync();
 
 			List<ProductV> productVs = new(products.Count);
-
-			foreach (Product? product in products)
-			{
-				productVs.Add(_mapper.Map<ProductV>(product));
-			}
+			productVs.AddRange(products.Select(product => _mapper.Map<ProductV>(product)));
 
 			List<TaxRate> taxRates = await _context.TaxRates
 				.Where(tr => tr.ReceiptId == receipt.ReceiptId)
 				.ToListAsync();
 
 			List<TaxRateV> taxRatesVs = new(taxRates.Count);
-
-			foreach (TaxRate? taxRate in taxRates)
-			{
-				taxRatesVs.Add(_mapper.Map<TaxRateV>(taxRate));
-			}
+			taxRatesVs.AddRange(taxRates.Select(taxRate => _mapper.Map<TaxRateV>(taxRate)));
 
 			List<ReceiptTaxDetail> receiptTaxDetails = await _context.ReceiptTaxDetails
 				.Where(trd => trd.ReceiptId == receipt.ReceiptId)
 				.ToListAsync();
 
 			List<ReceiptTaxDetailV> receiptTaxDetailVs = new(receiptTaxDetails.Count);
-
-			foreach (ReceiptTaxDetail? receiptTaxDetail in receiptTaxDetails)
-			{
-				receiptTaxDetailVs.Add(_mapper.Map<ReceiptTaxDetailV>(receiptTaxDetail));
-			}
+			receiptTaxDetailVs.AddRange(receiptTaxDetails.Select(receiptTaxDetail => _mapper.Map<ReceiptTaxDetailV>(receiptTaxDetail)));
 
 			ResReceiptDto ret = new()
 			{
@@ -356,7 +332,7 @@ namespace SapiensDataAPI.Controllers
 
 		// PUT: api/Receipts/5
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-		[HttpPut("{id}")]
+		[HttpPut("{id:int}")]
 		[Authorize(Policy = "Admin")]
 		public async Task<IActionResult> PutReceipt(int id, Receipt receipt)
 		{
@@ -377,10 +353,8 @@ namespace SapiensDataAPI.Controllers
 				{
 					return NotFound();
 				}
-				else
-				{
-					throw;
-				}
+
+				throw;
 			}
 
 			return NoContent();
@@ -392,30 +366,29 @@ namespace SapiensDataAPI.Controllers
 		[Authorize]
 		public async Task<IActionResult> PostReceipt([FromForm] UploadImageDto image)
 		{
-			string token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-			JsonElement decodedToken = _jwtTokenService.DecodeJwtPayloadToJson(token).RootElement;
-			JwtPayload? JwtPayload = JsonSerializer.Deserialize<JwtPayload>(decodedToken) ?? null;
-			if (JwtPayload == null)
+			string? username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			if (string.IsNullOrEmpty(username))
 			{
-				return BadRequest("JwtPayload is not ok.");
+				return Unauthorized("User couldn't be identified.");
 			}
 
-			if (image == null || image.Image.Length == 0)
+			if (image.Image.Length == 0)
+			{
 				return BadRequest("No image file provided.");
+			}
 
 			await Task.CompletedTask; // Delete this when the python path is implemented
-
 			return StatusCode(501, "Python path isn't implemented");
 
 			/*Env.Load(".env");
-			var googleDrivePath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_BEGINNING_PATH");
+			var googleDrivePath = Environment.GetEnvironmentVariable("DRIVE_BEGINNING_PATH");
 			if (googleDrivePath == null)
 			{
 				return StatusCode(500, "Google Drive path doesn't exist in .env file.");
 			}
 
-			//var uploadsFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "SapiensCloud", "src", "media", "UserReceiptUploads", JwtPayload.Sub);
-			var uploadsFolderPath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", JwtPayload.Sub, "receipts");
+			//var uploadsFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "SapiensCloud", "src", "media", "UserReceiptUploads", username);
+			var uploadsFolderPath = Path.Combine(googleDrivePath, "SapiensCloud", "media", "user_data", username, "receipts");
 
 			if (!Directory.Exists(uploadsFolderPath))
 			{
@@ -439,7 +412,7 @@ namespace SapiensDataAPI.Controllers
 				await image.Image.CopyToAsync(fileStream);
 			}
 
-			var user = await _userManager.FindByNameAsync(JwtPayload.Sub);
+			var user = await _userManager.FindByNameAsync(username);
 			if (user == null)
 			{
 				return NotFound("User was not found.");

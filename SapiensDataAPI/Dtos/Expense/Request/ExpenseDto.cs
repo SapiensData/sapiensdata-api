@@ -2,8 +2,6 @@
 {
 	public class ExpenseDto
 	{
-		public required string UserId { get; set; }
-
 		public string? SourceUserId { get; set; }
 
 		public string? SourceFirstName { get; set; }

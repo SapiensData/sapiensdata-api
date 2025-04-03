@@ -7,21 +7,20 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SapiensDataAPI.Data.DbContextCs;
 
-
 #nullable disable
 
 namespace SapiensDataAPI.Migrations
 {
-	[DbContext(typeof(SapiensDataDbContext))]
-    [Migration("20241106101832_add recovery email and phone number")]
-    partial class Addrecoveryemailandphonenumber
+    [DbContext(typeof(SapiensDataDbContext))]
+    [Migration("20250203163058_Change file name to SapiensDataDbContext")]
+    partial class ChangefilenametoSapiensDataDbContext
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -685,7 +684,6 @@ namespace SapiensDataAPI.Migrations
                         .HasColumnName("address_id");
 
                     b.Property<string>("AddressType")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("address_type");
@@ -720,7 +718,8 @@ namespace SapiensDataAPI.Migrations
                     b.HasIndex("CompanyId");
 
                     b.HasIndex(new[] { "AddressType" }, "UQ__CompanyA__071A9587B0D05465")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[address_type] IS NOT NULL");
 
                     b.ToTable("CompanyAddress", (string)null);
                 });
@@ -1046,7 +1045,7 @@ namespace SapiensDataAPI.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("description");
 
-                    b.Property<int>("FrequencyId")
+                    b.Property<int?>("FrequencyId")
                         .HasColumnType("int")
                         .HasColumnName("frequency_id");
 
@@ -1058,7 +1057,7 @@ namespace SapiensDataAPI.Migrations
                         .HasColumnType("int")
                         .HasColumnName("income_category_id");
 
-                    b.Property<DateOnly>("IncomeDate")
+                    b.Property<DateOnly?>("IncomeDate")
                         .HasColumnType("date")
                         .HasColumnName("income_date");
 
@@ -1475,6 +1474,8 @@ namespace SapiensDataAPI.Migrations
                     b.HasKey("ProductId")
                         .HasName("PK__Product__47027DF51756F8BB");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("IppUnit");
 
                     b.HasIndex("QUnit");
@@ -1550,12 +1551,20 @@ namespace SapiensDataAPI.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("trace_number");
 
+                    b.Property<DateTime?>("UploadDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("ReceiptId")
                         .HasName("PK__Receipt__91F52C1FA2C53D87");
 
                     b.HasIndex("PaymentMethodId");
 
                     b.HasIndex("StoreId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Receipt", (string)null);
                 });
@@ -1589,6 +1598,32 @@ namespace SapiensDataAPI.Migrations
                     b.HasIndex("ReceiptId");
 
                     b.ToTable("ReceiptPayment", (string)null);
+                });
+
+            modelBuilder.Entity("SapiensDataAPI.Models.ReceiptProduct", b =>
+                {
+                    b.Property<int>("ReceiptProductId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReceiptProductId"));
+
+                    b.Property<decimal>("Discount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReceiptId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ReceiptProductId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ReceiptId");
+
+                    b.ToTable("ReceiptProducts");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.ReceiptTaxDetail", b =>
@@ -1730,10 +1765,6 @@ namespace SapiensDataAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StoreId"));
 
-                    b.Property<int?>("AddressId")
-                        .HasColumnType("int")
-                        .HasColumnName("address_id");
-
                     b.Property<string>("BrandName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
@@ -1752,8 +1783,6 @@ namespace SapiensDataAPI.Migrations
                     b.HasKey("StoreId")
                         .HasName("PK__Store__A2F2A30C9852CCAC");
 
-                    b.HasIndex("AddressId");
-
                     b.ToTable("Store", (string)null);
                 });
 
@@ -1771,7 +1800,6 @@ namespace SapiensDataAPI.Migrations
                         .HasColumnName("address_id");
 
                     b.Property<string>("AddressType")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("address_type");
@@ -1805,9 +1833,6 @@ namespace SapiensDataAPI.Migrations
 
                     b.HasIndex("StoreId");
 
-                    b.HasIndex(new[] { "AddressType" }, "UQ__StoreAdd__071A9587EC1B4587")
-                        .IsUnique();
-
                     b.ToTable("StoreAddress", (string)null);
                 });
 
@@ -1820,7 +1845,10 @@ namespace SapiensDataAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TaxRateId"));
 
-                    b.Property<decimal>("NetAmount")
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("NetAmount")
                         .HasColumnType("decimal(5, 2)")
                         .HasColumnName("net_amount");
 
@@ -1839,7 +1867,7 @@ namespace SapiensDataAPI.Migrations
                         .HasColumnType("decimal(5, 2)")
                         .HasColumnName("vat_amount");
 
-                    b.Property<decimal>("VatRate")
+                    b.Property<decimal?>("VatRate")
                         .HasColumnType("decimal(5, 2)")
                         .HasColumnName("vat_rate");
 
@@ -1890,7 +1918,6 @@ namespace SapiensDataAPI.Migrations
                         .HasColumnName("address_id");
 
                     b.Property<string>("AddressType")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("address_type");
@@ -1925,7 +1952,8 @@ namespace SapiensDataAPI.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex(new[] { "AddressType" }, "UQ__UserAddr__071A95874A01A788")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[address_type] IS NOT NULL");
 
                     b.ToTable("UserAddress", (string)null);
                 });
@@ -2265,7 +2293,6 @@ namespace SapiensDataAPI.Migrations
                     b.HasOne("SapiensDataAPI.Models.Frequency", "Frequency")
                         .WithMany("Incomes")
                         .HasForeignKey("FrequencyId")
-                        .IsRequired()
                         .HasConstraintName("FK__Income__frequenc__25518C17");
 
                     b.HasOne("SapiensDataAPI.Models.IncomeCategory", "IncomeCategory")
@@ -2349,6 +2376,10 @@ namespace SapiensDataAPI.Migrations
 
             modelBuilder.Entity("SapiensDataAPI.Models.Product", b =>
                 {
+                    b.HasOne("SapiensDataAPI.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId");
+
                     b.HasOne("SapiensDataAPI.Models.UnitType", "IppUnitNavigation")
                         .WithMany("ProductIppUnitNavigations")
                         .HasForeignKey("IppUnit")
@@ -2374,6 +2405,8 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("WUnit")
                         .HasConstraintName("FK__Product__w_unit__02FC7413");
 
+                    b.Navigation("Category");
+
                     b.Navigation("IppUnitNavigation");
 
                     b.Navigation("QUnitNavigation");
@@ -2397,9 +2430,15 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("StoreId")
                         .HasConstraintName("FK__Receipt__store_i__09A971A2");
 
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "User")
+                        .WithMany("Receipts")
+                        .HasForeignKey("UserId");
+
                     b.Navigation("PaymentMethod");
 
                     b.Navigation("Store");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.ReceiptPayment", b =>
@@ -2415,6 +2454,25 @@ namespace SapiensDataAPI.Migrations
                         .HasConstraintName("FK__ReceiptPa__recei__1332DBDC");
 
                     b.Navigation("PaymentMethod");
+
+                    b.Navigation("Receipt");
+                });
+
+            modelBuilder.Entity("SapiensDataAPI.Models.ReceiptProduct", b =>
+                {
+                    b.HasOne("SapiensDataAPI.Models.Product", "Product")
+                        .WithMany("ReceiptProducts")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SapiensDataAPI.Models.Receipt", "Receipt")
+                        .WithMany("ReceiptProducts")
+                        .HasForeignKey("ReceiptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
 
                     b.Navigation("Receipt");
                 });
@@ -2457,16 +2515,6 @@ namespace SapiensDataAPI.Migrations
                     b.Navigation("Frequency");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SapiensDataAPI.Models.Store", b =>
-                {
-                    b.HasOne("SapiensDataAPI.Models.Address", "Address")
-                        .WithMany("Stores")
-                        .HasForeignKey("AddressId")
-                        .HasConstraintName("FK__Store__address_i__76969D2E");
-
-                    b.Navigation("Address");
                 });
 
             modelBuilder.Entity("SapiensDataAPI.Models.StoreAddress", b =>
@@ -2549,8 +2597,6 @@ namespace SapiensDataAPI.Migrations
 
                     b.Navigation("StoreAddresses");
 
-                    b.Navigation("Stores");
-
                     b.Navigation("UserAddresses");
                 });
 
@@ -2569,6 +2615,8 @@ namespace SapiensDataAPI.Migrations
                     b.Navigation("IncomeUsers");
 
                     b.Navigation("Investments");
+
+                    b.Navigation("Receipts");
 
                     b.Navigation("Savings");
 
@@ -2648,11 +2696,18 @@ namespace SapiensDataAPI.Migrations
                     b.Navigation("Receipts");
                 });
 
+            modelBuilder.Entity("SapiensDataAPI.Models.Product", b =>
+                {
+                    b.Navigation("ReceiptProducts");
+                });
+
             modelBuilder.Entity("SapiensDataAPI.Models.Receipt", b =>
                 {
                     b.Navigation("Expenses");
 
                     b.Navigation("ReceiptPayments");
+
+                    b.Navigation("ReceiptProducts");
 
                     b.Navigation("ReceiptTaxDetails");
 

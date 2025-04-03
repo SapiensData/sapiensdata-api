@@ -11,16 +11,16 @@ using SapiensDataAPI.Data.DbContextCs;
 
 namespace SapiensDataAPI.Migrations
 {
-    [DbContext(typeof(SapeinsDataDbContext))]
-    [Migration("20250203163058_Change file name to SapeinsDataDbContext")]
-    partial class ChangefilenametoSapeinsDataDbContext
+    [DbContext(typeof(SapiensDataDbContext))]
+    [Migration("20250327210154_Add LastPasswordChange to User")]
+    partial class AddLastPasswordChangetoUser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -203,7 +203,7 @@ namespace SapiensDataAPI.Migrations
                     b.ToTable("Address", (string)null);
                 });
 
-            modelBuilder.Entity("SapiensDataAPI.Models.ApplicationUserModel", b =>
+            modelBuilder.Entity("SapiensDataAPI.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -265,6 +265,9 @@ namespace SapiensDataAPI.Migrations
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("LastPasswordChange")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Linkedin")
                         .HasColumnType("nvarchar(max)");
@@ -1609,6 +1612,7 @@ namespace SapiensDataAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReceiptProductId"));
 
                     b.Property<decimal>("Discount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
@@ -2099,7 +2103,7 @@ namespace SapiensDataAPI.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", null)
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2108,7 +2112,7 @@ namespace SapiensDataAPI.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", null)
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2123,7 +2127,7 @@ namespace SapiensDataAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", null)
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2132,7 +2136,7 @@ namespace SapiensDataAPI.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", null)
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2148,7 +2152,7 @@ namespace SapiensDataAPI.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__BankAccou__bank___662B2B3B");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "User")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "User")
                         .WithMany("BankAccounts")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2206,7 +2210,7 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("CreditorCompanyId")
                         .HasConstraintName("FK__Debt__creditor_c__4F47C5E3");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "CreditorUser")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "CreditorUser")
                         .WithMany("Debts")
                         .HasForeignKey("CreditorUserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2245,7 +2249,7 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("SourceCompanyId")
                         .HasConstraintName("FK__Expense__source___3493CFA7");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "SourceUser")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "SourceUser")
                         .WithMany("ExpenseSourceUsers")
                         .HasForeignKey("SourceUserId")
                         .HasConstraintName("FK__Expense__source___339FAB6E");
@@ -2255,7 +2259,7 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("TaxRateId")
                         .HasConstraintName("FK__Expense__tax_rat__3864608B");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "User")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "User")
                         .WithMany("ExpenseUsers")
                         .HasForeignKey("UserId")
                         .IsRequired()
@@ -2310,12 +2314,12 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("SourceCompanyId")
                         .HasConstraintName("FK__Income__source_c__236943A5");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "SourceUser")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "SourceUser")
                         .WithMany("IncomeSourceUsers")
                         .HasForeignKey("SourceUserId")
                         .HasConstraintName("FK__Income__source_u__22751F6C");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "User")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "User")
                         .WithMany("IncomeUsers")
                         .HasForeignKey("UserId")
                         .IsRequired()
@@ -2351,7 +2355,7 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("LoanedToCompanyId")
                         .HasConstraintName("FK__Investmen__loane__56E8E7AB");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "LoanedToUser")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "LoanedToUser")
                         .WithMany("Investments")
                         .HasForeignKey("LoanedToUserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2430,7 +2434,7 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("StoreId")
                         .HasConstraintName("FK__Receipt__store_i__09A971A2");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "User")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "User")
                         .WithMany("Receipts")
                         .HasForeignKey("UserId");
 
@@ -2505,7 +2509,7 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("FrequencyId")
                         .HasConstraintName("FK__Savings__frequen__44CA3770");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "User")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "User")
                         .WithMany("Savings")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2551,7 +2555,7 @@ namespace SapiensDataAPI.Migrations
                         .HasForeignKey("AddressId")
                         .HasConstraintName("FK__UserAddre__addre__5AEE82B9");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "User")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "User")
                         .WithMany("UserAddresses")
                         .HasForeignKey("UserId")
                         .HasConstraintName("FK__UserAddre__user___59FA5E80");
@@ -2563,13 +2567,13 @@ namespace SapiensDataAPI.Migrations
 
             modelBuilder.Entity("SapiensDataAPI.Models.UserRelationship", b =>
                 {
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "RelatedUser")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "RelatedUser")
                         .WithMany("UserRelationshipRelatedUsers")
                         .HasForeignKey("RelatedUserId")
                         .IsRequired()
                         .HasConstraintName("FK__UserRelat__relat__60A75C0F");
 
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "User")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "User")
                         .WithMany("UserRelationshipUsers")
                         .HasForeignKey("UserId")
                         .IsRequired()
@@ -2582,7 +2586,7 @@ namespace SapiensDataAPI.Migrations
 
             modelBuilder.Entity("SapiensDataAPI.Models.UserSession", b =>
                 {
-                    b.HasOne("SapiensDataAPI.Models.ApplicationUserModel", "User")
+                    b.HasOne("SapiensDataAPI.Models.ApplicationUser", "User")
                         .WithMany("UserSessions")
                         .HasForeignKey("UserId")
                         .IsRequired()
@@ -2600,7 +2604,7 @@ namespace SapiensDataAPI.Migrations
                     b.Navigation("UserAddresses");
                 });
 
-            modelBuilder.Entity("SapiensDataAPI.Models.ApplicationUserModel", b =>
+            modelBuilder.Entity("SapiensDataAPI.Models.ApplicationUser", b =>
                 {
                     b.Navigation("BankAccounts");
 

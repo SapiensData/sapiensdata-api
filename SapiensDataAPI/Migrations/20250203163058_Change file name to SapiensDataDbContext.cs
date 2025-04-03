@@ -5,7 +5,7 @@
 namespace SapiensDataAPI.Migrations
 {
 	/// <inheritdoc />
-	public partial class ChangefilenametoSapeinsDataDbContext : Migration
+	public partial class ChangefilenametoSapiensDataDbContext : Migration
 	{
 		/// <inheritdoc />
 		protected override void Up(MigrationBuilder migrationBuilder)

@@ -1,18 +1,22 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SapiensDataAPI.Data.DbContextCs;
 using SapiensDataAPI.Dtos.Income.Request;
 using SapiensDataAPI.Models;
+using System.Security.Claims;
 
 namespace SapiensDataAPI.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class IncomesController(SapeinsDataDbContext context, IMapper mapper) : ControllerBase
+	public class IncomesController(SapiensDataDbContext context, IMapper mapper, UserManager<ApplicationUser> userManager) : ControllerBase
 	{
-		private readonly SapeinsDataDbContext _context = context;
+		private readonly SapiensDataDbContext _context = context;
 		private readonly IMapper _mapper = mapper;
+		private readonly UserManager<ApplicationUser> _userManager = userManager;
 
 		// GET: api/Incomes
 		[HttpGet]
@@ -22,7 +26,7 @@ namespace SapiensDataAPI.Controllers
 		}
 
 		// GET: api/Incomes/5
-		[HttpGet("{id}")]
+		[HttpGet("{id:int}")]
 		public async Task<ActionResult<Income>> GetIncome(int id)
 		{
 			Income? income = await _context.Incomes.FindAsync(id);
@@ -37,7 +41,8 @@ namespace SapiensDataAPI.Controllers
 
 		// PUT: api/Incomes/5
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-		[HttpPut("{id}")]
+		[HttpPut("{id:int}")]
+		[Authorize(Roles = "Admin")] // Temporary until the function is properly implemented
 		public async Task<IActionResult> PutIncome(int id, Income income)
 		{
 			if (id != income.IncomeId)
@@ -57,10 +62,8 @@ namespace SapiensDataAPI.Controllers
 				{
 					return NotFound();
 				}
-				else
-				{
-					throw;
-				}
+
+				throw;
 			}
 
 			return NoContent();
@@ -69,17 +72,32 @@ namespace SapiensDataAPI.Controllers
 		// POST: api/Incomes
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 		[HttpPost]
+		[Authorize]
 		public async Task<ActionResult<Income>> PostIncome(IncomeDto incomeDto)
 		{
+			string? username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			if (string.IsNullOrEmpty(username))
+			{
+				return Unauthorized("User couldn't be identified.");
+			}
+
+			ApplicationUser? user = await _userManager.FindByNameAsync(username);
+			if (user == null)
+			{
+				return NotFound("User not found.");
+			}
+
 			Income income = _mapper.Map<Income>(incomeDto);
-			_context.Incomes.Add(income);
+			income.UserId = user.Id;
+			await _context.Incomes.AddAsync(income);
 			await _context.SaveChangesAsync();
 
 			return CreatedAtAction("GetIncome", new { id = income.IncomeId }, income);
 		}
 
 		// DELETE: api/Incomes/5
-		[HttpDelete("{id}")]
+		[HttpDelete("{id:int}")]
+		[Authorize(Roles = "Admin")] // Temporary until the function is properly implemented
 		public async Task<IActionResult> DeleteIncome(int id)
 		{
 			Income? income = await _context.Incomes.FindAsync(id);
